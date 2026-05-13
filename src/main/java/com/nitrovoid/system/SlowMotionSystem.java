@@ -11,7 +11,7 @@ public class SlowMotionSystem {
     private final double cooldownDuration = 5.0; // cooldown 5 detik
     private double activeTimer = 0;
     private final double activeDuration = 3.0; // efek slow berlangsung 3 detik
-    private double slowMultiplier = 0.3; // enemy jalan 30% dari kecepatan normal
+    private double slowMultiplier = 0.4; // enemy jalan 40% dari kecepatan normal
 
     public void reset() {
         charge = startCharge;

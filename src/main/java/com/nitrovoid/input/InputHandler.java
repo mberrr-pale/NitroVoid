@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 public class InputHandler extends KeyAdapter {
     public boolean left, right, up;
     public boolean nitro, slowMotion;
+    public boolean pause; 
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -20,6 +21,7 @@ public class InputHandler extends KeyAdapter {
         // Aksi
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) nitro = true;
         if (e.getKeyCode() == KeyEvent.VK_C)     slowMotion = true;
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) pause = true;
     }
 
     @Override
@@ -35,5 +37,6 @@ public class InputHandler extends KeyAdapter {
         // Aksi
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) nitro = false;
         if (e.getKeyCode() == KeyEvent.VK_C)     slowMotion = false;
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) pause = false;
     }
 }

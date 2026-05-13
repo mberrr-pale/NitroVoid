@@ -54,7 +54,9 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update(double deltaTime) {
-        controller.update(deltaTime);
+        if (controller.getCurrentState() == GameState.PAUSE && input.pause) {
+        // handled di controller via pausePressed flag
+        } controller.update(deltaTime);
     }
 
     @Override
@@ -82,11 +84,20 @@ public class GamePanel extends JPanel implements Runnable {
             if (controller.isSlowCooldown()) {
                 g.drawString("Slow CD: " + (int) controller.getSlowCooldown() + "s", 10, 120);
             }
+            g.drawString("Speed: " + controller.getSpeedKmh() + " KM/h", 10, 140);            
+            if (controller.getPlayer().isBoostActive()) {
+                g.drawString("BOOST AKTIF!", 10, 160);
+            }
         }
 
         if (controller.getCurrentState() == GameState.GAMEOVER) {
             g.setColor(Color.RED);
             g.drawString("GAME OVER", width / 2 - 30, height / 2);
+        }
+        if (controller.getCurrentState() == GameState.PAUSE) {
+            g.setColor(Color.BLACK);
+            g.drawString("PAUSE", width / 2 - 20, height / 2);
+            g.drawString("Tekan ESC untuk lanjut", width / 2 - 60, height / 2 + 20);
         }
     }
 }

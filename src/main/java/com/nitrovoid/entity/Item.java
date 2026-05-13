@@ -16,8 +16,8 @@ public class Item extends Kendaraan {
         this.x = x;
         this.y = y;
         this.tipe = tipe;
-        this.width = 30;
-        this.height = 30;
+        this.width = 35;
+        this.height = 35;
     }
     // item scrolling 
     public void update(double worldSpeed, double speedMultiplier) {
@@ -41,18 +41,18 @@ public class Item extends Kendaraan {
                 g.setColor(Color.CYAN);
                 break;
         }
+        
         g.fillRect(x, y, width, height);
-        // label tipe di atas kotak
         g.setColor(Color.BLACK);
         switch (tipe) {
             case BOOST:
-                g.drawString("B", x + 10, y + 20);
+                g.drawString("B", x + 12, y + 22);
                 break;
             case NITRO:
-                g.drawString("N", x + 10, y + 20);
+                g.drawString("N", x + 12, y + 22);
                 break;
             case SLOWMOTION:
-                g.drawString("S", x + 10, y + 20);
+                g.drawString("S", x + 12, y + 22);
                 break;
         }
     }

@@ -3,22 +3,30 @@ package com.nitrovoid.util;
 import com.nitrovoid.entity.Kendaraan;
 
 public class CollisionDetector {
-    public static boolean isColliding(Kendaraan a, Kendaraan b) {
-        // batas kotak A
-        int aLeft   = a.getX();
-        int aRight  = a.getX() + a.getWidth();
-        int aTop    = a.getY();
-        int aBottom = a.getY() + a.getHeight();
-        // batas kotak B
-        int bLeft   = b.getX();
-        int bRight  = b.getX() + b.getWidth();
-        int bTop    = b.getY();
-        int bBottom = b.getY() + b.getHeight();
 
-        boolean tidakTabrakan = aRight  < bLeft   // A di kiri B
-                             || aLeft   > bRight  // A di kanan B
-                             || aBottom < bTop    // A di atas B
-                             || aTop    > bBottom;// A di bawah B
+    //Collision standar tanpa toleransi
+    public static boolean isColliding(Kendaraan a, Kendaraan b) {
+        return isColliding(a, b, 0);
+    }
+
+//    Collision dengan toleransi hitbox.
+//    tolerance > 0 → hitbox sedikit lebih kecil dari ukuran visual (lebih fair).
+//    Gunakan nilai positif, misal 5 untuk shrink 5px tiap sisi.
+    public static boolean isColliding(Kendaraan a, Kendaraan b, int tolerance) {
+        int aLeft   = a.getX()              + tolerance;
+        int aRight  = a.getX() + a.getWidth()  - tolerance;
+        int aTop    = a.getY()              + tolerance;
+        int aBottom = a.getY() + a.getHeight() - tolerance;
+
+        int bLeft   = b.getX()              + tolerance;
+        int bRight  = b.getX() + b.getWidth()  - tolerance;
+        int bTop    = b.getY()              + tolerance;
+        int bBottom = b.getY() + b.getHeight() - tolerance;
+
+        boolean tidakTabrakan = aRight  < bLeft
+                             || aLeft   > bRight
+                             || aBottom < bTop
+                             || aTop    > bBottom;
         return !tidakTabrakan;
     }
 }

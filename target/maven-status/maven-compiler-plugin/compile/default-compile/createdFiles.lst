@@ -6,6 +6,7 @@ com\nitrovoid\system\NitroSystem.class
 com\nitrovoid\entity\Player.class
 com\nitrovoid\system\EnemySpawner.class
 com\nitrovoid\game\GamePanel.class
+com\nitrovoid\system\DifficultyScaler.class
 com\nitrovoid\game\GameState.class
 com\nitrovoid\util\CollisionDetector.class
 com\nitrovoid\system\ScoreManager.class

@@ -7,6 +7,8 @@ public class Enemy extends Kendaraan {
     public Enemy(int x, int y) {
         this.x = x;
         this.y = y;
+        width = 45;
+        height = 80;
         speed = 3;
     }
     // tambah parameter speedMultiplier
