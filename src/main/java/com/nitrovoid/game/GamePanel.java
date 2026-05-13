@@ -27,7 +27,6 @@ public class GamePanel extends JPanel implements Runnable {
         player = new Player();
         // GameController pegang semua logic
         controller = new GameController(player, input);
-        controller.startGame();
     }
 
     public void startGameThread() {
@@ -54,10 +53,9 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update(double deltaTime) {
-        if (controller.getCurrentState() == GameState.PAUSE && input.pause) {
-        // handled di controller via pausePressed flag
-        } controller.update(deltaTime);
+        controller.update(deltaTime);
     }
+    
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -70,34 +68,57 @@ public class GamePanel extends JPanel implements Runnable {
             } for (Item item : controller.getItems()){
                 item.draw(g);
             }            
-            g.setColor(Color.black);
-            g.drawString("Time: " + (int) controller.getTimeLeft(), 10, 20);
-            g.drawString("Score: " + controller.getScore(), 10, 40);
-            g.drawString("Nitro: " + controller.getNitroCount(), 10, 60);
+                g.setColor(Color.black);
+                g.drawString("Time: " + (int) controller.getTimeLeft(), 10, 20);
+                g.drawString("Score: " + controller.getScore(), 10, 40);
+                g.drawString("Nitro: " + controller.getNitroCount(), 10, 60);
             if (controller.isNitroCooldown()){
                 g.drawString("Cooldown: " + (int) controller.getNitroCooldown() + "s", 10, 80);
             }
-            g.drawString("Slow: " + controller.getSlowCharge(), 10, 100);
+                g.drawString("Slow: " + controller.getSlowCharge(), 10, 100);
             if (controller.isSlowActive()) {
                 g.drawString("SLOW AKTIF!", 10, 120);
             }
             if (controller.isSlowCooldown()) {
                 g.drawString("Slow CD: " + (int) controller.getSlowCooldown() + "s", 10, 120);
             }
-            g.drawString("Speed: " + controller.getSpeedKmh() + " KM/h", 10, 140);            
+                g.drawString("Speed: " + controller.getSpeedKmh() + " KM/h", 10, 140);            
             if (controller.getPlayer().isBoostActive()) {
                 g.drawString("BOOST AKTIF!", 10, 160);
             }
         }
 
-        if (controller.getCurrentState() == GameState.GAMEOVER) {
-            g.setColor(Color.RED);
-            g.drawString("GAME OVER", width / 2 - 30, height / 2);
-        }
-        if (controller.getCurrentState() == GameState.PAUSE) {
-            g.setColor(Color.BLACK);
-            g.drawString("PAUSE", width / 2 - 20, height / 2);
-            g.drawString("Tekan ESC untuk lanjut", width / 2 - 60, height / 2 + 20);
-        }
+            if (controller.getCurrentState() == GameState.COUNTDOWN) {
+                g.setColor(Color.BLACK);
+                g.setFont(g.getFont().deriveFont(72f));
+                g.drawString(String.valueOf(controller.getCountdownValue()),
+                             width / 2 - 20, height / 2);
+            }
+            if (controller.getCurrentState() == GameState.PAUSE) {
+                g.setColor(Color.BLACK);
+                g.drawString("PAUSE", width / 2 - 20, height / 2);
+                g.drawString("Tekan ESC untuk lanjut", width / 2 - 60, height / 2 + 20);
+            }
+            if (controller.getCurrentState() == GameState.GAMEOVER) {
+                g.setColor(Color.RED);
+                g.drawString("GAME OVER", width / 2 - 40, height / 2);
+            }
+
+            if (controller.getCurrentState() == GameState.SCORE) {
+                g.setColor(Color.BLACK);
+                g.drawString("SCORE: " + controller.getScore(), width/2 - 40, height/2 - 55);
+                g.drawString("BEST SCORE : " + controller.getBestScore(), width/2 - 40, height/2 - 35);
+                g.drawString("Press R — Restart", width/2 - 50, height/2);
+                g.drawString("Press B — Back To Menu",    width/2 - 50, height/2 + 25);
+            }
+            if (controller.getCurrentState() == GameState.MENU) {
+                g.setColor(Color.BLACK);
+                g.drawString("Press ENTER — Start", width/2 - 60, height/2);
+                g.drawString("Press Q     — Exit",  width/2 - 60, height/2 + 25);
+            }
+            if (controller.getCurrentState() == GameState.STORY) {
+                g.setColor(Color.BLACK);
+                g.drawString("STORY (Press SPACE to skip)", width / 2 - 80, height / 2);
+            }
     }
 }

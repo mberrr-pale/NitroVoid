@@ -1,30 +1,66 @@
 package com.nitrovoid.system;
 
 public class ScoreManager {
-
     private double score;
+    private double scoreAccumulator = 0;
+    private int bestScore = 0;
 
     public ScoreManager() {
         score = 0;
     }
+
     public void reset() {
         score = 0;
+        scoreAccumulator = 0;
     }
-    public void update(double deltaTime) {
-        score += (int)(deltaTime*100);
+
+    public void update(double deltaTime, double currentSpeed) {
+        scoreAccumulator += currentSpeed * deltaTime * 8;
+        score = (int) scoreAccumulator;
     }
-       // --- Bonus event ---
-    public void addBoostBonus()         { score += 50;  }
-    public void addNitroBonus()         { score += 75;  }
-    public void addSlowMotionBonus()    { score += 100; }
-    public void addNitroPerfectBonus()  { score += 100; }
-    public void addNitroGoodBonus()     { score += 50;  }
- 
-    //Bonus sisa waktu saat game over: sisaWaktu × 50 
+
+    // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
         score += (int)(timeLeft * 50);
+        scoreAccumulator = score; // sync accumulator supaya tidak overlap
+        updateBestScore();
     }
-    public int getScore() {
-        return (int) score;
+
+    // Dipanggil saat waktu habis (tanpa bonus)
+    public void finalizeScore() {
+        updateBestScore();
     }
+
+    private void updateBestScore() {
+        if ((int) score > bestScore) {
+            bestScore = (int) score;
+            // TODO: unlock map — aktifkan saat sudah siap
+            // saveBestScore();
+            // MapManager.checkUnlock(bestScore);
+        }
+    }
+
+    // TODO: implementasi save/load best score ke file — aktifkan saat sudah siap
+    // private void saveBestScore() {
+    //     try {
+    //         java.util.prefs.Preferences prefs = 
+    //             java.util.prefs.Preferences.userNodeForPackage(ScoreManager.class);
+    //         prefs.putInt("bestScore", bestScore);
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    // }
+    //
+    // public void loadBestScore() {
+    //     try {
+    //         java.util.prefs.Preferences prefs = 
+    //             java.util.prefs.Preferences.userNodeForPackage(ScoreManager.class);
+    //         bestScore = prefs.getInt("bestScore", 0);
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    // }
+
+    public int getScore()     { return (int) score; }
+    public int getBestScore() { return bestScore; }
 }

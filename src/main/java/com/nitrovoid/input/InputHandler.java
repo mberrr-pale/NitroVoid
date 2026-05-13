@@ -6,7 +6,7 @@ import java.awt.event.KeyEvent;
 public class InputHandler extends KeyAdapter {
     public boolean left, right, up;
     public boolean nitro, slowMotion;
-    public boolean pause; 
+    public boolean pause, enter, space, restart, exitGame, backToMenu; 
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -22,6 +22,11 @@ public class InputHandler extends KeyAdapter {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) nitro = true;
         if (e.getKeyCode() == KeyEvent.VK_C)     slowMotion = true;
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) pause = true;
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) enter = true;
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) space = true;
+        if (e.getKeyCode() == KeyEvent.VK_R)     restart = true;
+        if (e.getKeyCode() == KeyEvent.VK_Q)     exitGame = true;
+        if (e.getKeyCode() == KeyEvent.VK_B)    backToMenu = true;
     }
 
     @Override
@@ -38,5 +43,11 @@ public class InputHandler extends KeyAdapter {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) nitro = false;
         if (e.getKeyCode() == KeyEvent.VK_C)     slowMotion = false;
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) pause = false;
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) enter = false;
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) space = false;
+        if (e.getKeyCode() == KeyEvent.VK_R)     restart = false;
+        if (e.getKeyCode() == KeyEvent.VK_Q)     exitGame = false;
+        if (e.getKeyCode() == KeyEvent.VK_B)    backToMenu = false;
+
     }
 }
