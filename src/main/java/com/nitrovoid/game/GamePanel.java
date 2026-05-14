@@ -75,13 +75,12 @@ public class GamePanel extends JPanel implements Runnable {
             }
 
             // select
-            if (input.enterPressed) {
+            if (input.enter) {
                 switch (homeScreen.getSelectedIndex()) {
                     case 0:
                         // PLAY
                         controller.startGame();
-                        controller.setCurrentState(GameState.STORY
-                        );
+                        controller.setCurrentState(GameState.STORY);
                         break;
                     case 1:
                         // SETTINGS
@@ -92,7 +91,7 @@ public class GamePanel extends JPanel implements Runnable {
                         System.exit(0);
                         break;
                 }
-                input.enterPressed = false;
+                input.enter = false;
             }
             return;
         }
@@ -121,14 +120,14 @@ public class GamePanel extends JPanel implements Runnable {
                     250
             );
             g.drawString(
-                    "Tekan ENTER untuk lanjut",
+                    "Tekan SPACE untuk lanjut",
                     250,
                     300
             );
 
-            if (input.enterPressed) {
-                controller.setCurrentState(GameState.PLAYING);
-                input.enterPressed = false;
+            if (input.space) {
+                controller.setCurrentState(GameState.COUNTDOWN);
+                input.space = false;
             }
         }
 
@@ -161,16 +160,28 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        if (controller.getCurrentState() == GameState.GAMEOVER) {
-            g.setColor(Color.RED);
-            g.drawString("GAME OVER", width / 2 - 30, height / 2);
-        }
+            if (controller.getCurrentState() == GameState.COUNTDOWN) {
+                g.setColor(Color.BLACK);
+                g.setFont(g.getFont().deriveFont(72f));
+                g.drawString(String.valueOf(controller.getCountdownValue()),
+                             width / 2 - 20, height / 2);
+            }
+            if (controller.getCurrentState() == GameState.PAUSE) {
+                g.setColor(Color.BLACK);
+                g.drawString("PAUSE", width / 2 - 20, height / 2);
+                g.drawString("Tekan ESC untuk lanjut", width / 2 - 60, height / 2 + 20);
+            }
+            if (controller.getCurrentState() == GameState.GAMEOVER) {
+                g.setColor(Color.RED);
+                g.drawString("GAME OVER", width / 2 - 40, height / 2);
+            }
 
-        // PAUSE
-        if (controller.getCurrentState() == GameState.PAUSE) {
-            g.setColor(Color.BLACK);
-            g.drawString("PAUSE", width / 2 - 20, height / 2);
-            g.drawString("Tekan ESC untuk lanjut", width / 2 - 60, height / 2 + 20);
-        }
+            if (controller.getCurrentState() == GameState.SCORE) {
+                g.setColor(Color.BLACK);
+                g.drawString("SCORE: " + controller.getScore(), width/2 - 40, height/2 - 55);
+                g.drawString("BEST SCORE : " + controller.getBestScore(), width/2 - 40, height/2 - 35);
+                g.drawString("Press R — Restart", width/2 - 50, height/2);
+                g.drawString("Press B — Back To Menu",    width/2 - 50, height/2 + 25);
+            }
     }
 }

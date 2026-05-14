@@ -1,18 +1,19 @@
 package com.nitrovoid.game;
 
-import com.nitrovoid.entity.Player;
+import java.util.ArrayList;
+
 import com.nitrovoid.entity.Enemy;
 import com.nitrovoid.entity.Item;
+import com.nitrovoid.entity.Player;
 import com.nitrovoid.input.InputHandler;
-import com.nitrovoid.util.CollisionDetector;
-import com.nitrovoid.system.TimerSystem;
-import com.nitrovoid.system.ScoreManager;
+import com.nitrovoid.system.DifficultyScaler;
 import com.nitrovoid.system.EnemySpawner;
 import com.nitrovoid.system.ItemSpawner;
 import com.nitrovoid.system.NitroSystem;
+import com.nitrovoid.system.ScoreManager;
 import com.nitrovoid.system.SlowMotionSystem;
-import com.nitrovoid.system.DifficultyScaler;
-import java.util.ArrayList;
+import com.nitrovoid.system.TimerSystem;
+import com.nitrovoid.util.CollisionDetector;
 
 public class GameController {
     private GameState currentState = GameState.MENU;
@@ -37,26 +38,61 @@ public class GameController {
     private static final double WS_BOOST_BONUS = 2.0; // tambahan saat boost item aktif
     private static final double WS_ACCEL = 0.5; // px/frame² — naik saat gas
     private static final double WS_PASSIVE = 0.02; // naik otomatis tiap frame (pasif)
+    private double gameOverTimer = 0;
+    private final double GAMEOVER_DELAY = 3.0;
+    private double countdownTimer = 3.0; // 3-2-1
+    private int countdownValue = 3;      // angka yang ditampilkan
+    private double storyTimer = 0;       // untuk track durasi story 
+    private boolean enterPressed = false;
+    private boolean restartPressed = false;
+    private boolean backToMenuPressed = false;
     
     public GameController(Player player, InputHandler input) {
         this.player = player;
         this.input = input;
     }
     public void update(double deltaTime) {
-        if (currentState == GameState.PAUSE) {
-            if (input.pause && !pausePressed) {
-                pausePressed = true;
-                currentState = GameState.PLAYING;
-            } if (!input.pause) pausePressed = false;
-                  return;
-        }
-        if (currentState == GameState.PLAYING) {
-            updatePlaying(deltaTime);
+        switch (currentState) {
+            case MENU:
+                if (input.enter && !enterPressed) {
+                    enterPressed = true;
+                    startStory();
+                }
+                if (!input.enter) {enterPressed = false;}
+                if (input.exitGame){ 
+                    exitGame();
+                }
+                break;
+            case STORY:
+                if (input.space) startCountdown(); // skip
+                    break;    
+            case COUNTDOWN:  updateCountdown(deltaTime);
+                break;
+            case PLAYING:    updatePlaying(deltaTime);    
+                break;
+            case PAUSE:      updatePause();               
+                break;
+            case GAMEOVER:   updateGameOver(deltaTime);   
+                break;
+            case SCORE:
+                if (input.restart && !restartPressed) {
+                    restartPressed = true;
+                    restartGame();
+                }
+                if (!input.restart) restartPressed = false;
+                if (input.backToMenu && !backToMenuPressed) {
+                    backToMenuPressed = true;
+                    goToMenu();
+                }
+                if (!input.backToMenu) backToMenuPressed = false;
+                break;  
+            default: 
+                break; // MENU, STORY, SCORE ditangani UI nanti
         }
     }
     private void updatePlaying(double deltaTime ) {
         timer.update(deltaTime);
-        scoreManager.update(deltaTime);
+        scoreManager.update(deltaTime, player.getCurrentSpeed());
         nitroSystem.update(deltaTime);
         slowMotionSystem.update(deltaTime);
         player.update(input, deltaTime);
@@ -83,8 +119,6 @@ public class GameController {
         worldSpeed += WS_PASSIVE * deltaTime;
         if (worldSpeed > WS_MAX) worldSpeed = WS_MAX; // passive tidak melewati WS_MAX
 
-        // Kirim ke player untuk display HUD
-        player.setWorldSpeed(worldSpeed);
     
         // Input Pause
         if (input.pause && !pausePressed) {
@@ -93,19 +127,11 @@ public class GameController {
         }
         if (!input.pause) pausePressed = false;
 
-//      Timer  
-        if (timer.isTimeUp()){
-            scoreManager.addTimeBonus(timer.getTimeLeft());
-            currentState = GameState.GAMEOVER;
-            System.out.println("WAKTU HABIS - GAME OVER");
-        }
         // input nitro & cek supaya ga spam
         if (input.nitro && !nitroPressed){
             nitroPressed = true;
             NitroSystem.NitroTiming timing = nitroSystem.activate();
             player.applyNitro(timing);
-            if (timing == NitroSystem.NitroTiming.PERFECT) scoreManager.addNitroPerfectBonus();
-            else if (timing == NitroSystem.NitroTiming.GOOD) scoreManager.addNitroGoodBonus();
         }
         if (!input.nitro)nitroPressed = false;
         // cek input slow motion
@@ -119,17 +145,27 @@ public class GameController {
         double difficultySpeed = DifficultyScaler.getSpeedMultiplier(scoreManager.getScore());
         double speedMultiplier = slowMotionSystem.getSpeedMultiplier() * difficultySpeed;
         DifficultyScaler.apply(scoreManager.getScore(), enemySpawner);
-        enemySpawner.update(worldSpeed, screenHeight, slowMotionSystem.getSpeedMultiplier(), itemSpawner.getItems());
-        itemSpawner.update(worldSpeed, screenHeight, slowMotionSystem.getSpeedMultiplier(), enemySpawner.getEnemies());
+
+        // GANTI keduanya jadi pakai speedMultiplier:
+        enemySpawner.update(worldSpeed, screenHeight, speedMultiplier, itemSpawner.getItems());
+        itemSpawner.update(worldSpeed, screenHeight, speedMultiplier, enemySpawner.getEnemies());
         
         // Cek collision player vs enemy
         for (Enemy enemy : enemySpawner.getEnemies()) {
             if (CollisionDetector.isColliding(player, enemy, HITBOX_TOLERANCE)) {
                 scoreManager.addTimeBonus(timer.getTimeLeft());
                 currentState = GameState.GAMEOVER;
-                System.out.println("GAME OVER - TABRAKAN!");
+                gameOverTimer = 0;
             }
         }
+
+        // Cek waktu habis
+        if (timer.isTimeUp()) {
+            scoreManager.finalizeScore();
+            currentState = GameState.GAMEOVER;
+            gameOverTimer = 0;
+        }
+
         // Cek collision player vs item 
         Item toRemove = null;
         for (Item item : itemSpawner.getItems()) {
@@ -149,36 +185,83 @@ public class GameController {
             case BOOST:
                 player.applyBoost();
                 timer.addTime(5.0); 
-                scoreManager.addBoostBonus();
                 System.out.println("Item BOOST diambil! +5 detik");
                 break;
             case NITRO:
                 nitroSystem.addNitro();
-                scoreManager.addNitroBonus();
                 System.out.println("Item NITRO diambil!");
                 break;
             case SLOWMOTION:
                 slowMotionSystem.addCharge();
-                scoreManager.addSlowMotionBonus();
                 System.out.println("Item SLOWMOTION diambil!");
                 break;
         }
     }
+    // Dipanggil dari MENU (tombol start)
+    public void startStory() {
+        currentState = GameState.STORY;
+    }
+
+    // Dipanggil dari STORY (selesai atau skip)
+    public void startCountdown() {
+        currentState = GameState.COUNTDOWN;
+        countdownTimer = 3.0;
+        countdownValue = 3;
+    }
+    // Dipanggil otomatis saat countdown selesai
     public void startGame() {
         currentState = GameState.PLAYING;
+        worldSpeed = WS_MIN;
         timer.start();
         scoreManager.reset();
         nitroSystem.reset();
         slowMotionSystem.reset();
+        enemySpawner = new EnemySpawner();
+        itemSpawner  = new ItemSpawner();
     }
-    public void resumeGame(){
-        currentState = GameState.PLAYING;}
-    
-    public void restartGame(){
+//  restart
+    public void restartGame() {
+        timer.reset();
+        gameOverTimer = 0;
+        scoreManager.reset();
+        nitroSystem.reset();
+        slowMotionSystem.reset();
+        restartPressed = false;
         enemySpawner = new EnemySpawner();
         itemSpawner = new ItemSpawner();
+        startCountdown();
+    }
+    // tombol menu
+    public void goToMenu() {
+        currentState = GameState.MENU;
         timer.reset();
-        startGame();
+        gameOverTimer = 0;
+        enemySpawner = new EnemySpawner();
+        itemSpawner  = new ItemSpawner();
+    }
+    public void exitGame() {
+    System.exit(0);
+    }
+    private void updateCountdown(double deltaTime) {
+        countdownTimer -= deltaTime;
+        countdownValue = (int) Math.ceil(countdownTimer); // 3, 2, 1
+        if (countdownTimer <= 0) {
+            startGame();
+        }
+    }
+    private void updatePause() {
+        if (input.pause && !pausePressed) {
+            pausePressed = true;
+            currentState = GameState.PLAYING;
+        }
+        if (!input.pause) pausePressed = false;
+    }
+
+    private void updateGameOver(double deltaTime) {
+        gameOverTimer += deltaTime;
+        if (gameOverTimer >= GAMEOVER_DELAY) {
+            currentState = GameState.SCORE;
+        }
     }
     
     public void setCurrentState(GameState state) {
@@ -187,7 +270,7 @@ public class GameController {
 
 //  Getters  
     public double getTimeLeft(){ return timer.getTimeLeft();    }
-    public GameState getCurrentState() { return currentState; }
+    public GameState getCurrentState() { return currentState;}
     public Player getPlayer() { return player; }
     public ArrayList<Enemy> getEnemies() { return enemySpawner.getEnemies(); }
     public ArrayList<Item> getItems() { return itemSpawner.getItems(); }
@@ -201,5 +284,8 @@ public class GameController {
     public double getSlowCooldown() { return slowMotionSystem.getCooldownTimer(); }
     public boolean isBoostActive()   { return player.isBoostActive(); }
     public int getSpeedKmh() { return player.getSpeedKmh(); }
+    public int getCountdownValue()  { return countdownValue; }
+    public double getGameOverTimer() { return gameOverTimer; }
+    public int getBestScore() { return scoreManager.getBestScore(); }
 
 }

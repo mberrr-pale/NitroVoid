@@ -8,10 +8,11 @@ import com.nitrovoid.system.NitroSystem;
 public class Player extends Kendaraan {     
     private double currentSpeed = 5.0;
     private double normalSpeed = 5.0;
-    private double maxSpeed = 10.0;
-    private double acceleration = 0.45;
-    private double deceleration = 0.3;
-    private double worldSpeed = 0;
+    private double maxSpeed = 18.0;
+    private double acceleration = 6.0;
+    private double deceleration = 3.0;
+    private double lateralSpeed = 0;
+    private final double lateralDecel = 1.8;
     private boolean boostActive = false;
     private double  boostTimer  = 0;
     public  static final double BOOST_DURATION = 3.0;
@@ -21,7 +22,7 @@ public class Player extends Kendaraan {
     public static final int ROAD_LEFT  = 100;
     public static final int ROAD_RIGHT = 700;
     private int baseY = 520;
-    private static final int FORWARD_OFFSET = 500;
+    private static final int FORWARD_OFFSET = 350;
 
     public Player() {
         x = 377;
@@ -54,62 +55,77 @@ public class Player extends Kendaraan {
     }
     
     public void update(InputHandler input, double deltaTime) {
+        // === KECEPATAN MAJU ===
+        double boostFloor = boostActive ? normalSpeed + 3.0 : normalSpeed;
+        double topSpeed   = maxSpeed + nitroBoost;
 
-        // Lateral — simpel, pakai currentSpeed
-        if (input.left)  x -= (int) currentSpeed;
-        if (input.right) x += (int) currentSpeed;
-        if (x < ROAD_LEFT)          x = ROAD_LEFT;
-        if (x > ROAD_RIGHT - width) x = ROAD_RIGHT - width;
-
-        // Gas — smooth acceleration
         if (input.up) {
-            currentSpeed += acceleration;
-            if (currentSpeed > maxSpeed + nitroBoost) 
-                currentSpeed = maxSpeed + nitroBoost;
+            currentSpeed += acceleration * deltaTime;
+            if (currentSpeed > topSpeed) currentSpeed = topSpeed;
         } else {
-            currentSpeed -= deceleration;
-            if (currentSpeed < normalSpeed) 
-                currentSpeed = normalSpeed;
+            currentSpeed -= deceleration * deltaTime;
+            if (currentSpeed < boostFloor) currentSpeed = boostFloor;
         }
 
-        // offset proporsional — normalSpeed = y normal, maxSpeed = y paling atas
+        // === PERSPEKTIF Y ===
+        // Makin cepat → player sedikit naik (ilusi maju)
         double speedRatio = (currentSpeed - normalSpeed) / (maxSpeed - normalSpeed);
         if (speedRatio < 0) speedRatio = 0;
         if (speedRatio > 1) speedRatio = 1;
+        int targetY = baseY - (int)(speedRatio * FORWARD_OFFSET); // max naik 40px
+        if (y > targetY) { y -= 2; if (y < targetY) y = targetY; }
+        else if (y < targetY) { y += 2; if (y > targetY) y = targetY; }
 
-        int targetY = baseY - (int)(speedRatio * FORWARD_OFFSET);
+        // === LATERAL — makin cepat makin susah dikontrol ===
+        // lateralAccel naik proporsional dengan kecepatan
+        double lateralAccel = 0.8 + (speedRatio * 2.0); // range 0.8 – 2.8
+        double lateralMax   = 3.0 + (speedRatio * 4.0); // range 3.0 – 7.0
 
-        if (y > targetY) {
-            y -= 3;
-            if (y < targetY) y = targetY;
-        } else if (y < targetY) {
-            y += 3;
-            if (y > targetY) y = targetY;
+        if (input.left) {
+            lateralSpeed -= lateralAccel;
+            if (lateralSpeed < -lateralMax) lateralSpeed = -lateralMax;
+        } else if (input.right) {
+            lateralSpeed += lateralAccel;
+            if (lateralSpeed > lateralMax) lateralSpeed = lateralMax;
+        } else {
+            // Decelerate — makin cepat makin lama berhenti (inersia)
+            double decel = lateralDecel - (speedRatio * 0.8); // range 1.8 – 1.0
+            if (lateralSpeed > 0) {
+                lateralSpeed -= decel;
+                if (lateralSpeed < 0) lateralSpeed = 0;
+            } else if (lateralSpeed < 0) {
+                lateralSpeed += decel;
+                if (lateralSpeed > 0) lateralSpeed = 0;
+            }
         }
+        x += (int) lateralSpeed;
+        // Tidak ada hard clamp — batas jalan tetap ada tapi bisa "keluar" sedikit
+        // Kalau mau tetap ada batas keras, uncomment ini:
+        if (x < ROAD_LEFT) x = ROAD_LEFT;
+        if (x > ROAD_RIGHT - width) x = ROAD_RIGHT - width;
 
-        // Timer nitro
+        // === TIMER NITRO ===
         if (nitroActive) {
             nitroTimer -= deltaTime;
             if (nitroTimer <= 0) {
                 nitroActive = false;
                 nitroBoost  = 0;
-                System.out.println("Efek Nitro Habis");
             }
         }
 
-        // Timer boost
+        // === TIMER BOOST ===
         if (boostActive) {
             boostTimer -= deltaTime;
             if (boostTimer <= 0) {
                 boostActive = false;
-                System.out.println("Efek Boost Habis");
             }
         }
     }
 
 //    getter
-    public void setWorldSpeed(double ws) { this.worldSpeed = ws; }
-    public int   getSpeedKmh()           { return (int)(worldSpeed * 20); } // 3→60, 9→180
+    public int   getSpeedKmh()           { 
+        double ratio = (currentSpeed - normalSpeed) / (maxSpeed - normalSpeed);
+        return (int)(60 + ratio * 120); }
     public boolean isBoostActive()       { return boostActive; }
     public boolean isNitroActive()       { return nitroActive; }
     public double getNitroBoost()        { return nitroBoost; }
