@@ -2,23 +2,30 @@ package com.nitrovoid.system;
 
 public class NitroSystem {
 
-    private int nitroCount;                    // stok nitro
-    private final int maxNitro = 5;            // maksimal stok nitro
-    private final int startNitro = 3;          // stok awal
-    private boolean onCooldown = false;        // sedang cooldown atau tidak
-    private double cooldownTimer = 0;          // hitung mundur cooldown
-    private final double cooldownDuration = 5.0; // cooldown 5 detik
-    private double lastUseTime = 0;            // waktu terakhir nitro dipakai
-    private final double berturutWindow = 3.0; // window berturut-turut 3 detik
-    private int useStreak = 0;                 // hitung pemakaian berturut-turut
-    private double gameTime = 0;               // waktu total game berjalan
+    private int nitroCount;                    
+    private final int maxNitro = 5;            
+    private final int startNitro = 3;          
+    private boolean onCooldown = false;        
+    private double cooldownTimer = 0;          
+    private final double cooldownDuration = 5.0; 
+    private double lastUseTime = 0;            
+    private final double berturutWindow = 3.0; 
+    private int useStreak = 0;                 
+    private double gameTime = 0;
+    private double barPosition = 0.0;
+    private double barDirection = 1.0;
+    private final double barSpeed = 0.8;
+    private final double PERFECT_MIN = 0.45;
+    private final double PERFECT_MAX = 0.55;
+    private final double GOOD_MIN = 0.33;
+    private final double GOOD_MAX = 0.70;
+
+    private NitroTiming lastTiming = NitroTiming.MISS;
 
     // hasil timing nitro
     public enum NitroTiming {
         PERFECT, GOOD, MISS
     }
-
-    private NitroTiming lastTiming = NitroTiming.MISS;
 
     public void reset() {
         nitroCount = startNitro;
@@ -27,10 +34,22 @@ public class NitroSystem {
         useStreak = 0;
         gameTime = 0;
         lastUseTime = 0;
+        barPosition = 0.0;
+        barDirection = 1.0;
     }
 
     public void update(double deltaTime) {
         gameTime += deltaTime;
+        
+        // Gerakan bar bolak balik
+        barPosition += barDirection * barSpeed * deltaTime;
+        if(barPosition >= 1.0){
+            barPosition = 1.0;
+            barDirection = -1.0;
+        } else if (barPosition <= 0.0) {
+            barPosition = 0.0;
+            barDirection = 1.0;
+        }
 
         // hitung mundur cooldown
         if (onCooldown) {
@@ -67,28 +86,25 @@ public class NitroSystem {
         }
         // tentukan timing
         // timing ditentukan berdasarkan kapan tombol ditekan
-        double roll = Math.random();
-        if (roll < 0.3) {
+         if (barPosition >= PERFECT_MIN && barPosition <= PERFECT_MAX) {
             lastTiming = NitroTiming.PERFECT;
-            System.out.println("PERFECT!");
-        } else if (roll < 0.7) {
+        } else if (barPosition >= GOOD_MIN && barPosition <= GOOD_MAX) {
             lastTiming = NitroTiming.GOOD;
-            System.out.println("GOOD!");
         } else {
             lastTiming = NitroTiming.MISS;
-            System.out.println("MISS!");
         }
+
+        System.out.println("Nitro: " + lastTiming + " (bar=" + String.format("%.2f", barPosition) + ")");
         return lastTiming;
     }
-    // dipanggil saat ambil item nitro
+
     public void addNitro() {
-        if (nitroCount < maxNitro) {
-            nitroCount++;
-        }
+        if (nitroCount < maxNitro) nitroCount++;
     }
 
     public boolean isOnCooldown() { return onCooldown; }
     public int getNitroCount() { return nitroCount; }
     public double getCooldownTimer() { return cooldownTimer; }
     public NitroTiming getLastTiming() { return lastTiming; }
+    public double getBarPosition() { return barPosition; }
 }

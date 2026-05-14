@@ -2,6 +2,7 @@ package com.nitrovoid.system;
 
 import com.nitrovoid.entity.Enemy;
 import com.nitrovoid.entity.Item;
+import com.nitrovoid.game.GameConfig;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -11,8 +12,8 @@ public class EnemySpawner {
     private Random random = new Random();
     private long lastSpawnTime = 0;
     private long spawnInterval = 2000; 
-    private final int ROAD_LEFT = 100;
-    private final int ROAD_RIGHT = 700;
+    private final int ROAD_LEFT = GameConfig.ROAD_LEFT;
+    private final int ROAD_RIGHT = GameConfig.ROAD_RIGHT;
 
     // Jarak minimum antar enemy dan enemy vs item
     private final int MIN_ENEMY_GAP = 80;
@@ -34,7 +35,7 @@ public class EnemySpawner {
     private void spawnEnemy(ArrayList<Item> items) {
         final int MAX_TRIES = 10;
         for (int t = 0; t < MAX_TRIES; t++) {
-            int ex = ROAD_LEFT + random.nextInt((ROAD_RIGHT - 45) - ROAD_LEFT); // 45 = enemy width
+            int ex = ROAD_LEFT + random.nextInt((ROAD_RIGHT - 80) - ROAD_LEFT); // 45 = enemy width
             int ey = -100;
 
             if (!tooCloseToOtherEnemies(ex, ey) &&
