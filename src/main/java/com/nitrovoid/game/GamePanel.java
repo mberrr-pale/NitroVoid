@@ -1,13 +1,16 @@
 package com.nitrovoid.game;
 
-import javax.swing.JPanel;
+import java.awt.Color ;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Color;
-import com.nitrovoid.entity.Player;
+
+import javax.swing.JPanel;
+
 import com.nitrovoid.entity.Enemy;
-import com.nitrovoid.input.InputHandler;
 import com.nitrovoid.entity.Item;
+import com.nitrovoid.entity.Player;
+import com.nitrovoid.game.screen.HomeScreen;
+import com.nitrovoid.input.InputHandler;
 
 public class GamePanel extends JPanel implements Runnable {
     final int width = 800;
@@ -16,6 +19,7 @@ public class GamePanel extends JPanel implements Runnable {
     Player player;
     InputHandler input;
     GameController controller;
+    HomeScreen homeScreen;
 
     public GamePanel() {
         this.setPreferredSize(new Dimension(width, height));
@@ -25,9 +29,11 @@ public class GamePanel extends JPanel implements Runnable {
         this.setFocusable(true);
 
         player = new Player();
+        homeScreen = new HomeScreen();
         // GameController pegang semua logic
         controller = new GameController(player, input);
-        controller.startGame();
+        // halaman awal
+        controller.setCurrentState(GameState.MENU);
     }
 
     public void startGameThread() {
@@ -49,25 +55,90 @@ public class GamePanel extends JPanel implements Runnable {
                 Thread.sleep(16);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }   
+            }
         }
     }
 
     public void update(double deltaTime) {
-        if (controller.getCurrentState() == GameState.PAUSE && input.pause) {
-        // handled di controller via pausePressed flag
-        } controller.update(deltaTime);
+        // MENU LOGIC
+        if (controller.getCurrentState() == GameState.MENU) {
+            // move up
+            if (input.up) {
+                homeScreen.moveUp();
+                input.up = false;
+            }
+
+            // move down
+            if (input.down) {
+                homeScreen.moveDown();
+                input.down = false;
+            }
+
+            // select
+            if (input.enterPressed) {
+                switch (homeScreen.getSelectedIndex()) {
+                    case 0:
+                        // PLAY
+                        controller.startGame();
+                        controller.setCurrentState(GameState.STORY
+                        );
+                        break;
+                    case 1:
+                        // SETTINGS
+                        System.out.println("SETTINGS");
+                        break;
+                    case 2:
+                        // EXIT
+                        System.exit(0);
+                        break;
+                }
+                input.enterPressed = false;
+            }
+            return;
+        }
+
+        // GAME LOGIC
+        controller.update(deltaTime);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // Render sesuai state
+
+        // MENU
+        if (controller.getCurrentState() == GameState.MENU) {
+            homeScreen.draw(g, width, height);
+        }
+
+        // STORY
+        if (controller.getCurrentState() == GameState.STORY) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, width, height);
+            g.setColor(Color.WHITE);
+            g.drawString(
+                    "Kota dikuasai pembalap ilegal...",
+                    250,
+                    250
+            );
+            g.drawString(
+                    "Tekan ENTER untuk lanjut",
+                    250,
+                    300
+            );
+
+            if (input.enterPressed) {
+                controller.setCurrentState(GameState.PLAYING);
+                input.enterPressed = false;
+            }
+        }
+
+        // PLAYING
         if (controller.getCurrentState() == GameState.PLAYING) {
             player.draw(g);
             for (Enemy enemy : controller.getEnemies()) {
                 enemy.draw(g);
-            } for (Item item : controller.getItems()){
+            }
+            for (Item item : controller.getItems()) {
                 item.draw(g);
             }            
             g.setColor(Color.black);
@@ -94,6 +165,8 @@ public class GamePanel extends JPanel implements Runnable {
             g.setColor(Color.RED);
             g.drawString("GAME OVER", width / 2 - 30, height / 2);
         }
+
+        // PAUSE
         if (controller.getCurrentState() == GameState.PAUSE) {
             g.setColor(Color.BLACK);
             g.drawString("PAUSE", width / 2 - 20, height / 2);

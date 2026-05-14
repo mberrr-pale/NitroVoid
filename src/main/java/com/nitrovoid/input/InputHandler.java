@@ -4,9 +4,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class InputHandler extends KeyAdapter {
-    public boolean left, right, up;
+    public boolean left, right, up, down;
     public boolean nitro, slowMotion;
-    public boolean pause; 
+    public boolean pause;
+    public boolean enterPressed;
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -14,6 +15,7 @@ public class InputHandler extends KeyAdapter {
         if (e.getKeyCode() == KeyEvent.VK_LEFT)  left = true;
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) right = true;
         if (e.getKeyCode() == KeyEvent.VK_UP)    up = true;
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) down = true;
         // Gerak — WASD
         if (e.getKeyCode() == KeyEvent.VK_A) left = true;
         if (e.getKeyCode() == KeyEvent.VK_D) right = true;
@@ -22,6 +24,7 @@ public class InputHandler extends KeyAdapter {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT) nitro = true;
         if (e.getKeyCode() == KeyEvent.VK_C)     slowMotion = true;
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) pause = true;
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) enterPressed = true;
     }
 
     @Override

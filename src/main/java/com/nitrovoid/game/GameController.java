@@ -181,6 +181,10 @@ public class GameController {
         startGame();
     }
     
+    public void setCurrentState(GameState state) {
+        this.currentState = state;
+    }
+
 //  Getters  
     public double getTimeLeft(){ return timer.getTimeLeft();    }
     public GameState getCurrentState() { return currentState; }
