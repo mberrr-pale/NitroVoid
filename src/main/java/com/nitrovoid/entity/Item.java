@@ -6,6 +6,7 @@ import java.awt.Color;
 public class Item extends Kendaraan {
     public enum TipeItem {
         BOOST,      // menambah kecepatan sementara
+        TIME,
         NITRO,      // menambah stok nitro
         SLOWMOTION  // menambah charge slow motion
     }

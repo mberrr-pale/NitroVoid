@@ -16,7 +16,7 @@ public class HomeScreen {
 
 public HomeScreen() {
 
-    backgroundImg = load("/images/background.png");
+//    backgroundImg = load("/images/background.png");
 
     playImg = load("/images/play.png");
     settingsImg = load("/images/setting.png");

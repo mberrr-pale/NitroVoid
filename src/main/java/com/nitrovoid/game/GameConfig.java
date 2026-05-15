@@ -5,8 +5,8 @@ public class GameConfig {
     public static final int SCREEN_WIDTH  = 800;
     public static final int SCREEN_HEIGHT = 600;
     // ROAD
-    public static final int ROAD_LEFT  = 180;
-    public static final int ROAD_RIGHT = 620;
+    public static final int ROAD_LEFT  = 250;
+    public static final int ROAD_RIGHT = 540;
     public static final int ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
     // PLAYER
     public static final int PLAYER_START_X = 377;

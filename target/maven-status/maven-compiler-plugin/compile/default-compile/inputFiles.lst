@@ -1,4 +1,5 @@
 D:\College\NitroVoid\src\main\java\com\nitrovoid\game\GamePanel.java
+D:\College\NitroVoid\src\main\java\com\nitrovoid\ui\GameplayScreen.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\entity\Kendaraan.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\system\NitroSystem.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\entity\Player.java
@@ -13,6 +14,7 @@ D:\College\NitroVoid\src\main\java\com\nitrovoid\util\CollisionDetector.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\entity\Enemy.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\input\InputHandler.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\system\TimerSystem.java
+D:\College\NitroVoid\src\main\java\com\nitrovoid\game\GameConfig.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\game\GameController.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\entity\Item.java
 D:\College\NitroVoid\src\main\java\com\nitrovoid\game\GameState.java

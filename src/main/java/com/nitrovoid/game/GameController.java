@@ -16,6 +16,7 @@ import com.nitrovoid.system.TimerSystem;
 import com.nitrovoid.util.CollisionDetector;
 import com.nitrovoid.game.screen.HomeScreen;
 import com.nitrovoid.game.GameConfig;
+import java.awt.Color;
 
 public class GameController {
     private GameState currentState = GameState.MENU;
@@ -30,14 +31,13 @@ public class GameController {
     private ItemSpawner itemSpawner = new ItemSpawner();
 //  Config
     private static final int HITBOX_TOLERANCE = 5; 
-    private static final double WS_MIN  = 3.0;   
-    private static final double WS_NORM = 6.0;   
-    private static final double WS_MAX  = 9.0;
-    private static final double WS_BOOST_BONUS = 2.0; 
-    private static final double WS_ACCEL = 0.5; 
-    private static final double WS_PASSIVE = 0.02;
+    private static final double WS_MIN  = 0.5;   
+    private static final double WS_NORM = 2.0;   
+    private static final double WS_MAX  = 3.0;
+    private static final double WS_BOOST_BONUS = 1.5; 
+    private static final double WS_ACCEL = 1.0; 
+    private static final double WS_PASSIVE = 0.03;
     private final double FEEDBACK_DURATION = 1.5;
-    private static final boolean DEBUG = true;
 //  Runtime Variable
     private double worldSpeed = WS_MIN;   // px/frame awal = 60 KM/h
     private double countdownTimer = 3.0; // 3-2-1
@@ -52,16 +52,15 @@ public class GameController {
     private boolean backToMenuPressed = false;
 //  UI Feedback
     private String nitroFeedback = "";
+    private String itemFeedback = "";
+    private Color itemFeedbackColor = Color.WHITE;
+    private double itemFeedbackTimer = 0;
 
     
     public GameController(Player player, InputHandler input) {
         this.player = player;
         this.input = input;
-        
         homeScreen = new HomeScreen();
-        if (DEBUG) {
-            System.out.println("Item BOOST diambil!");
-        }
     }
 //  Public Entry
     public void update(double deltaTime) {
@@ -143,7 +142,7 @@ public class GameController {
     private void updateCountdown(double deltaTime) {
         countdownTimer -= deltaTime;
         countdownValue = (int) Math.ceil(countdownTimer); // 3, 2, 1
-        if (countdownTimer <= 0) {
+        if (countdownTimer <= -1) {
             startGame();
         }
     }
@@ -195,47 +194,55 @@ public class GameController {
         timer.update(deltaTime);
         scoreManager.update(
                 deltaTime, 
-      player.getCurrentSpeed());
+      worldSpeed);
         nitroSystem.update(deltaTime);
         slowMotionSystem.update(deltaTime);
         player.update(input, deltaTime);
     }
     private void updateWorldSpeed(double deltaTime) {
         double targetSpeed = WS_NORM;
-//      gas
-        if (input.up)                   
-            targetSpeed = WS_MAX;           // gas → dorong ke max
-//      boost
-        if (player.isBoostItemActive()) 
-            targetSpeed += WS_BOOST_BONUS; // boost item
-//      nitro        
-        if (player.isNitroActive()){
-            double nitroBoost = player.getNitroBoost();
-            worldSpeed = Math.min(worldSpeed + nitroBoost * deltaTime * 15, 
-                                  WS_MAX + nitroBoost);
+        // GAS
+        if (input.up) {
+            targetSpeed = WS_MAX;
         }
-        // Clamp target
-        if (targetSpeed > WS_MAX + player.getNitroBoost()) {
-            targetSpeed = WS_MAX + player.getNitroBoost();
-        }  
-        // Smooth worldSpeed menuju target
+        // BOOST ITEM
+        if (player.isBoostItemActive()) {
+            targetSpeed += WS_BOOST_BONUS;
+        }
+        // NITRO
+        if (player.isNitroActive()) {
+            double nitroBoost = player.getNitroBoost();
+            worldSpeed += nitroBoost * deltaTime * 20;
+            worldSpeed += 0.08;
+            targetSpeed += nitroBoost;
+        }
+        // MAX ALLOWED SPEED
+        double maxAllowedSpeed = WS_MAX;
+        if (player.isBoostItemActive()) {
+            maxAllowedSpeed += WS_BOOST_BONUS;
+        }
+        if (player.isNitroActive()) {
+            maxAllowedSpeed += player.getNitroBoost();
+        }
+        // SMOOTH ACCELERATION
         if (worldSpeed < targetSpeed) {
             worldSpeed += WS_ACCEL * deltaTime;
-            if (worldSpeed > targetSpeed){
+            if (worldSpeed > targetSpeed) {
                 worldSpeed = targetSpeed;
-            }    
+            }
         } else {
             worldSpeed -= WS_ACCEL * deltaTime;
-            if (worldSpeed < WS_MIN){
-                worldSpeed = WS_MIN; // tidak pernah berhenti total
+            if (worldSpeed < WS_MIN) {
+                worldSpeed = WS_MIN;
             }
-        } 
-        // Passive acceleration — makin lama main makin cepat        
-        worldSpeed += WS_PASSIVE * deltaTime;
-        if (worldSpeed > WS_MAX){
-            worldSpeed = WS_MAX;
         }
-    }    
+        // PASSIVE SPEED
+        worldSpeed += WS_PASSIVE * deltaTime;
+        // FINAL CLAMP
+        if (worldSpeed > maxAllowedSpeed) {
+            worldSpeed = maxAllowedSpeed;
+        }
+    }
     private void handleGameplayInput(double deltaTime) {   
         // Input Pause
         if (input.pause && !pausePressed) {
@@ -265,6 +272,12 @@ public class GameController {
                 nitroFeedback      = "MISS!";
                 nitroFeedbackTimer = FEEDBACK_DURATION;
                 break;
+            }
+        }
+        if (itemFeedbackTimer > 0) {
+            itemFeedbackTimer -= deltaTime;
+            if (itemFeedbackTimer <= 0){
+                itemFeedback = "";
             }
         }
         if (!input.nitro)nitroPressed = false;
@@ -310,22 +323,33 @@ public class GameController {
         }
     }
     private void handleItemPickup(Item item){
-        switch (item.getTipe()) {
-            case BOOST:
-                player.applyBoost();
-                timer.addTime(5.0); 
-                System.out.println("Item BOOST diambil! +5 detik");
-                break;
-            case NITRO:
-                nitroSystem.addNitro();
-                System.out.println("Item NITRO diambil!");
-                break;
-            case SLOWMOTION:
-                slowMotionSystem.addCharge();
-                System.out.println("Item SLOWMOTION diambil!");
-                break;
-        }
-    }
+       switch (item.getTipe()) {
+           case BOOST:
+               player.applyBoost();
+               itemFeedback = "BOOST!";
+               itemFeedbackColor = Color.ORANGE;
+               itemFeedbackTimer = 1.2;
+               break;
+           case TIME:
+               timer.addTime(5.0);
+               itemFeedback = "+5 SEC";
+               itemFeedbackColor = Color.GREEN;
+               itemFeedbackTimer = 1.2;
+               break;
+           case NITRO:
+               nitroSystem.addNitro();
+               itemFeedback = "+1 NITRO";
+               itemFeedbackColor = Color.CYAN;
+               itemFeedbackTimer = 1.2;
+               break;
+           case SLOWMOTION:
+               slowMotionSystem.addCharge();
+               itemFeedback = "SLOW READY";
+               itemFeedbackColor = Color.CYAN;
+               itemFeedbackTimer = 1.2;
+               break;
+       }
+   }
 //  GAME FLOW
     public void startStory() {
         currentState = GameState.STORY;
@@ -389,10 +413,17 @@ public class GameController {
     public boolean isSlowCooldown() { return slowMotionSystem.isOnCooldown(); }
     public double getSlowCooldown() { return slowMotionSystem.getCooldownTimer(); }
     public boolean isBoostActive()   { return player.isBoostActive(); }
-    public int getSpeedKmh() { return player.getSpeedKmh(); }
+    public int getSpeedKmh() {
+        double maxPossibleSpeed = WS_MAX + WS_BOOST_BONUS + 3.0;
+        double ratio = (worldSpeed - WS_MIN) / (maxPossibleSpeed - WS_MIN);
+                        ratio = Math.max(0, Math.min(1, ratio));
+        return (int)(60 + ratio * 180);
+    }
     public int getCountdownValue()  { return countdownValue; }
     public int getBestScore() { return scoreManager.getBestScore(); }
     public String getNitroFeedback()   { return nitroFeedback; }
     public double getBarPosition()     { return nitroSystem.getBarPosition(); }
-
+    public double getWorldSpeed() { return worldSpeed; }
+    public String getItemFeedback() { return itemFeedback; }
+    public Color getItemFeedbackColor() { return itemFeedbackColor; }
 }

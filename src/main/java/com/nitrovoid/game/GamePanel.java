@@ -12,14 +12,18 @@ import com.nitrovoid.entity.Item;
 import com.nitrovoid.entity.Player;
 import com.nitrovoid.input.InputHandler;
 import com.nitrovoid.game.GameConfig;
+import com.nitrovoid.ui.GameplayScreen;
+
 
 public class GamePanel extends JPanel implements Runnable {
     final int width  = GameConfig.SCREEN_WIDTH;
     final int height = GameConfig.SCREEN_HEIGHT;
     Thread gameThread;
+    private double roadOffset = 0;
     Player player;
     InputHandler input;
     GameController controller;
+    private GameplayScreen gameplayScreen;
 
     public GamePanel() {
         this.setPreferredSize(new Dimension(width, height));
@@ -32,6 +36,7 @@ public class GamePanel extends JPanel implements Runnable {
         player     = new Player();
         controller = new GameController(player, input);
         controller.setCurrentState(GameState.MENU);
+        gameplayScreen = new GameplayScreen();
     }
 
     public void startGameThread() {
@@ -58,6 +63,9 @@ public class GamePanel extends JPanel implements Runnable {
     
     public void update(double deltaTime) {
         controller.update(deltaTime);
+        gameplayScreen.update(
+                controller.getWorldSpeed(),
+                height);
     }
     
 // RENDERING 
@@ -142,48 +150,33 @@ public class GamePanel extends JPanel implements Runnable {
     }
     private void drawCountdown(Graphics g) {
         Font defaultFont = g.getFont();
-
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, height);
-
-        g.setColor(Color.WHITE);
+        
+        String text;
+        if (controller.getCountdownValue() <= 0) {
+            text = "GO!";
+            g.setColor(Color.GREEN);
+        } else {
+            text = String.valueOf(
+                controller.getCountdownValue());
+            g.setColor(Color.WHITE);
+        }
         g.setFont(defaultFont.deriveFont(72f));
-
         g.drawString(
-            String.valueOf(controller.getCountdownValue()),
-            width / 2 - 20,
-            height / 2
-        );
+            text,
+            width / 2 - 40,
+            height / 2);
     }
     private void drawGameplay(Graphics g) {
         if (controller.getCurrentState() == GameState.PLAYING) {
             Font defaultFont = g.getFont();
             // BACKGROUND
-            g.setColor(new Color(25, 25, 25));
-            g.fillRect(0, 0, width, height);
-
-            g.setColor(new Color(60, 60, 60));
-            g.fillRect(GameConfig.ROAD_LEFT,0,GameConfig.ROAD_WIDTH, height);
-
-            g.setColor(Color.WHITE);
-            g.fillRect(GameConfig.ROAD_LEFT,0,5,height);
-            g.fillRect(GameConfig.ROAD_RIGHT - 5,0,5,height);
-            
-            int roadOffset = (int)(System.currentTimeMillis() / 10 % 60);
-            g.setColor(Color.WHITE);
-            for (int i = -60; i < height; i += 60) {
-                g.fillRect(width/2 - 5, i + roadOffset, 10, 40);
-            }
+            gameplayScreen.drawBackground(g, width, height);
+            // ITEM
+            gameplayScreen.drawItems(g, controller);
             // ENTITY
-            player.draw(g);
-
-            for (Enemy enemy : controller.getEnemies()) {
-                enemy.draw(g);
-            }
-
-            for (Item item : controller.getItems()) {
-                item.draw(g);
-            }
+            gameplayScreen.drawEntities(g, controller);
             // HUD TOP
             g.setColor(Color.WHITE);
             g.setFont(defaultFont.deriveFont(Font.BOLD, 18f));
@@ -211,11 +204,16 @@ public class GamePanel extends JPanel implements Runnable {
                 g.setColor(Color.RED);
                 g.drawString("CD : " + (int) controller.getSlowCooldown() + "s", 20, 200);
             }
-            // Boost
+            // Boost  
             g.setColor(Color.WHITE);
             if (controller.getPlayer().isBoostActive()) {
                 g.setColor(Color.ORANGE);
                 g.drawString("BOOST ACTIVE!", 20, 240);
+            }
+            // Time 
+            if(!controller.getItemFeedback().isEmpty()) {
+                g.setColor(controller.getItemFeedbackColor());
+                g.drawString(controller.getItemFeedback(), 20, 270);
             }
             // SPEED HUD
             g.setColor(Color.WHITE);
