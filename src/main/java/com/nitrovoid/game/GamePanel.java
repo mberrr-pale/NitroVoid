@@ -149,24 +149,7 @@ public class GamePanel extends JPanel implements Runnable {
         );
     }
     private void drawCountdown(Graphics g) {
-        Font defaultFont = g.getFont();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width, height);
-        
-        String text;
-        if (controller.getCountdownValue() <= 0) {
-            text = "GO!";
-            g.setColor(Color.GREEN);
-        } else {
-            text = String.valueOf(
-                controller.getCountdownValue());
-            g.setColor(Color.WHITE);
-        }
-        g.setFont(defaultFont.deriveFont(72f));
-        g.drawString(
-            text,
-            width / 2 - 40,
-            height / 2);
+        gameplayScreen.drawCountDown(g, controller, width, height);
     }
     private void drawGameplay(Graphics g) {
         if (controller.getCurrentState() == GameState.PLAYING) {
@@ -178,72 +161,7 @@ public class GamePanel extends JPanel implements Runnable {
             // ENTITY
             gameplayScreen.drawEntities(g, controller);
             // HUD TOP
-            g.setColor(Color.WHITE);
-            g.setFont(defaultFont.deriveFont(Font.BOLD, 18f));
-            g.drawString("TIME : "  + (int) controller.getTimeLeft(), 20,           30);
-            g.drawString("SCORE : " + controller.getScore(),           width/2 - 70, 30);
-            g.drawString("BEST : "  + controller.getBestScore(),       width - 180,  30);
-            // HUD LEFT
-            g.setFont(defaultFont.deriveFont(
-                     Font.BOLD, 16f));
-            // Nitro
-            g.setColor(Color.WHITE);
-            g.drawString("NITRO : " + controller.getNitroCount(), 20, 100);
-            if (controller.isNitroCooldown()) {
-                g.setColor(Color.RED);
-                g.drawString("CD : " + (int) controller.getNitroCooldown() + "s", 20, 120);
-            }
-            // Slow
-            g.setColor(Color.WHITE);
-            g.drawString("SLOW : " + controller.getSlowCharge(), 20, 160);
-            if (controller.isSlowActive()) {
-                g.setColor(Color.CYAN);
-                g.drawString("SLOW ACTIVE!", 20, 180);
-            }
-            if (controller.isSlowCooldown()) {
-                g.setColor(Color.RED);
-                g.drawString("CD : " + (int) controller.getSlowCooldown() + "s", 20, 200);
-            }
-            // Boost  
-            g.setColor(Color.WHITE);
-            if (controller.getPlayer().isBoostActive()) {
-                g.setColor(Color.ORANGE);
-                g.drawString("BOOST ACTIVE!", 20, 240);
-            }
-            // Time 
-            if(!controller.getItemFeedback().isEmpty()) {
-                g.setColor(controller.getItemFeedbackColor());
-                g.drawString(controller.getItemFeedback(), 20, 270);
-            }
-            // SPEED HUD
-            g.setColor(Color.WHITE);
-            g.setFont(defaultFont.deriveFont(Font.BOLD, 28f));
-            g.drawString(controller.getSpeedKmh() + " KM/H", 560, 520);
-            // NITRO TIMING BAR
-            final int barX      = 220;
-            final int barY      = 520;
-            final int barWidth  = 360;
-            final int barHeight = 22;
-
-            g.setColor(Color.DARK_GRAY);
-            g.fillRect(barX, barY, barWidth, barHeight);
-            // GOOD zone
-            g.setColor(Color.YELLOW);
-            g.fillRect(barX + (int)(0.30 * barWidth), barY,
-                       (int)(0.40 * barWidth), barHeight);
-            // PERFECT zone
-            g.setColor(Color.GREEN);
-            g.fillRect(barX + (int)(0.45 * barWidth), barY,
-                       (int)(0.10 * barWidth), barHeight);
-            // Indicator
-            g.setColor(Color.WHITE);
-            g.fillRect(barX + (int)(controller.getBarPosition() * barWidth) - 2,
-                       barY - 4, 4, barHeight + 8);
-            // Border & label
-            g.setColor(Color.BLACK);
-            g.drawRect(barX, barY, barWidth, barHeight);
-            g.setFont(defaultFont.deriveFont(Font.BOLD, 14f));
-            g.drawString("NITRO", barX - 55, barY + 16);
+            gameplayScreen.drawHUD(g, controller);
             // FEEDBACK TEXT
             if (!controller.getNitroFeedback().isEmpty()) {
                 g.setFont(defaultFont.deriveFont(Font.BOLD, 24f));

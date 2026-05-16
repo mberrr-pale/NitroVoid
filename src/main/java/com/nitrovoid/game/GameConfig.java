@@ -14,7 +14,4 @@ public class GameConfig {
     // HUD
     public static final int NITRO_BAR_X = 220;
     public static final int NITRO_BAR_Y = 520;
-    private GameConfig() {
-        // prevent instantiation
-    }
 }
