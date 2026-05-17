@@ -1,12 +1,13 @@
 package com.nitrovoid.input;
 
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
-public class InputHandler extends KeyAdapter {
+public class InputHandler extends KeyAdapter implements MouseListener, MouseMotionListener {
     public boolean left, right, up, down;
     public boolean nitro, slowMotion;
     public boolean pause, enter, space, restart, exitGame, backToMenu;
+    public int mouseX, mouseY;
+    public boolean mouseLeftPressed;
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -49,6 +50,32 @@ public class InputHandler extends KeyAdapter {
         if (e.getKeyCode() == KeyEvent.VK_R)     restart = false;
         if (e.getKeyCode() == KeyEvent.VK_Q)     exitGame = false;
         if (e.getKeyCode() == KeyEvent.VK_B)    backToMenu = false;
-
     }
+    
+    // ----- MOUSE -----
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) mouseLeftPressed = true;
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) mouseLeftPressed = false;
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        mouseX = e.getX();
+        mouseY = e.getY();
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        mouseX = e.getX();
+        mouseY = e.getY();
+    }
+    
+    @Override public void mouseClicked(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
 }

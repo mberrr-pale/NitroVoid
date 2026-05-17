@@ -1,38 +1,39 @@
 package com.nitrovoid.game;
 
-import java.awt.Color ;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.nitrovoid.entity.Enemy;
 import com.nitrovoid.entity.Item;
 import com.nitrovoid.entity.Player;
-import com.nitrovoid.game.screen.HomeScreen;
 import com.nitrovoid.input.InputHandler;
 
 public class GamePanel extends JPanel implements Runnable {
     final int width = 800;
     final int height = 600;
+
     Thread gameThread;
     Player player;
     InputHandler input;
     GameController controller;
-    HomeScreen homeScreen;
 
-    public GamePanel() {
+    public GamePanel(JFrame frame) {
+
         this.setPreferredSize(new Dimension(width, height));
         this.setDoubleBuffered(true);
+        this.setFocusable(true);
         input = new InputHandler();
         this.addKeyListener(input);
-        this.setFocusable(true);
+        this.addMouseListener(input);
+        this.addMouseMotionListener(input);
 
         player = new Player();
-        homeScreen = new HomeScreen();
-        // GameController pegang semua logic
-        controller = new GameController(player, input);
-        // halaman awal
+        controller = new GameController(frame, player, input);
         controller.setCurrentState(GameState.MENU);
     }
 
@@ -44,7 +45,7 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void run() {
         long lastTime = System.nanoTime();
-        
+
         while (gameThread != null) {
             long currentTime = System.nanoTime();
             double deltaTime = (currentTime - lastTime) / 1_000_000_000.0;
@@ -60,43 +61,6 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void update(double deltaTime) {
-        // MENU LOGIC
-        if (controller.getCurrentState() == GameState.MENU) {
-            // move up
-            if (input.up) {
-                homeScreen.moveUp();
-                input.up = false;
-            }
-
-            // move down
-            if (input.down) {
-                homeScreen.moveDown();
-                input.down = false;
-            }
-
-            // select
-            if (input.enter) {
-                switch (homeScreen.getSelectedIndex()) {
-                    case 0:
-                        // PLAY
-                        controller.startGame();
-                        controller.setCurrentState(GameState.STORY);
-                        break;
-                    case 1:
-                        // SETTINGS
-                        System.out.println("SETTINGS");
-                        break;
-                    case 2:
-                        // EXIT
-                        System.exit(0);
-                        break;
-                }
-                input.enter = false;
-            }
-            return;
-        }
-
-        // GAME LOGIC
         controller.update(deltaTime);
     }
 
@@ -104,34 +68,12 @@ public class GamePanel extends JPanel implements Runnable {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // MENU
-        if (controller.getCurrentState() == GameState.MENU) {
-            homeScreen.draw(g, width, height);
-        }
+        Graphics2D g2 = (Graphics2D) g;
 
-        // STORY
-        if (controller.getCurrentState() == GameState.STORY) {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, width, height);
-            g.setColor(Color.WHITE);
-            g.drawString(
-                    "Kota dikuasai pembalap ilegal...",
-                    250,
-                    250
-            );
-            g.drawString(
-                    "Tekan SPACE untuk lanjut",
-                    250,
-                    300
-            );
+        // RENDER UI SCREEN
+        controller.render(g2, width, height);
 
-            if (input.space) {
-                controller.setCurrentState(GameState.COUNTDOWN);
-                input.space = false;
-            }
-        }
-
-        // PLAYING
+        // GAMEPLAY RENDER
         if (controller.getCurrentState() == GameState.PLAYING) {
             player.draw(g);
             for (Enemy enemy : controller.getEnemies()) {
