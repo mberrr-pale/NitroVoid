@@ -7,19 +7,35 @@ import java.awt.Graphics;
 
 import com.nitrovoid.entity.Enemy;
 import com.nitrovoid.entity.Item;
+import static com.nitrovoid.entity.Item.TipeItem.BOOST;
+import static com.nitrovoid.entity.Item.TipeItem.NITRO;
+import static com.nitrovoid.entity.Item.TipeItem.SLOWMOTION;
+import static com.nitrovoid.entity.Item.TipeItem.TIME;
 import com.nitrovoid.entity.Player;
+import static com.nitrovoid.game.GameState.CHOOSE_MAP;
+import static com.nitrovoid.game.GameState.COUNTDOWN;
+import static com.nitrovoid.game.GameState.MENU;
+import static com.nitrovoid.game.GameState.PAUSE;
+import static com.nitrovoid.game.GameState.PLAYING;
+import static com.nitrovoid.game.GameState.SCORE;
+import static com.nitrovoid.game.GameState.STORY;
 import com.nitrovoid.input.InputHandler;
 import com.nitrovoid.system.*;
+import static com.nitrovoid.system.NitroSystem.NitroTiming.GOOD;
+import static com.nitrovoid.system.NitroSystem.NitroTiming.MISS;
+import static com.nitrovoid.system.NitroSystem.NitroTiming.PERFECT;
 import com.nitrovoid.ui.screen.HomeScreen;
 import com.nitrovoid.ui.screen.SelectMapScreen;
 import com.nitrovoid.ui.screen.StoryScreen;
 import com.nitrovoid.util.CollisionDetector;
+import java.awt.Color;
 
 public class GameController {
+
     // CORE
     private GameState currentState = GameState.MENU;
     private final JFrame frame;
-    private final Player player;
+    private Player player;
     private final InputHandler input;
 
     // UI
@@ -36,24 +52,28 @@ public class GameController {
     private ItemSpawner itemSpawner = new ItemSpawner();
     private NitroSystem nitroSystem = new NitroSystem();
     private SlowMotionSystem slowMotionSystem = new SlowMotionSystem();
-    private final int screenWidth = 800;
-    private final int screenHeight = 600;
+    private static final int HITBOX_TOLERANCE = 5;
+    private static final double WS_MIN = 0.5;
+    private static final double WS_NORM = 2.0;
+    private static final double WS_MAX = 3.0;
+    private static final double WS_BOOST_BONUS = 1.5;
+    private static final double WS_ACCEL = 1.0;
+    private static final double WS_PASSIVE = 0.03;
+    private final double FEEDBACK_DURATION = 1.5;
+//  Runtime Variable
+    private double worldSpeed = WS_MIN;   // px/frame awal = 60 KM/h
+    private double countdownTimer = 3.0; // 3-2-1
+    private int countdownValue = 3;
+    private double nitroFeedbackTimer = 0;
+    //  UI Feedback
+    private String nitroFeedback = "";
+    private String itemFeedback = "";
+    private Color itemFeedbackColor = Color.WHITE;
+    private double itemFeedbackTimer = 0;
+
     private boolean nitroPressed = false; // biar ga spam
     private boolean slowPressed = false; // biar ga spam
     private boolean pausePressed = false; // untuk pause
-    private final int HITBOX_TOLERANCE = 5; //hitbox tolerance -5px semua sisi
-    private double worldSpeed = 3.0;   // px/frame awal = 60 KM/h
-    private static final double WS_MIN = 3.0;   // minimum (tidak bisa lebih lambat)
-    private static final double WS_NORM = 6.0;   // target normal tanpa gas
-    private static final double WS_MAX = 9.0;   // maksimal dengan nitro/boost
-    private static final double WS_BOOST_BONUS = 2.0; // tambahan saat boost item aktif
-    private static final double WS_ACCEL = 0.5; // px/frame² — naik saat gas
-    private static final double WS_PASSIVE = 0.02; // naik otomatis tiap frame (pasif)
-    private double gameOverTimer = 0;
-    private final double GAMEOVER_DELAY = 3.0;
-    private double countdownTimer = 3.0; // 3-2-1
-    private int countdownValue = 3;      // angka yang ditampilkan
-    private double storyTimer = 0;       // untuk track durasi story 
     private boolean enterPressed = false;
     private boolean mouseClicked = false;
     private boolean restartPressed = false;
@@ -70,9 +90,7 @@ public class GameController {
         music = new MusicSystem();
         homeScreen = new HomeScreen(music);
         selectMapScreen = new SelectMapScreen();
-        storyScreen = new StoryScreen(
-                () -> SwingUtilities.invokeLater(this::startCountdown)
-        );
+        storyScreen = new StoryScreen(() -> SwingUtilities.invokeLater(this::startCountdown));
 
         initializeGame();
     }
@@ -94,9 +112,8 @@ public class GameController {
             case MENU:
                 updateMenu();
                 break;
-
-            case MAP:
-                updateMapSelect();
+            case CHOOSE_MAP:
+                updateChooseMap();
                 break;
             case STORY:
                 updateStory();
@@ -110,11 +127,10 @@ public class GameController {
             case PAUSE:
                 updatePause();
                 break;
-            case GAMEOVER:
-                updateGameOver(deltaTime);
-                break;
             case SCORE:
                 updateScore();
+                break;
+            default:
                 break;
         }
     }
@@ -179,7 +195,7 @@ public class GameController {
     // MAP SELECT
     private void openMapSelection() {
 
-        currentState = GameState.MAP;
+        currentState = GameState.CHOOSE_MAP;
 
         SwingUtilities.invokeLater(() -> {
             frame.getContentPane().removeAll();
@@ -190,7 +206,7 @@ public class GameController {
         });
     }
 
-    private void updateMapSelect() {
+    private void updateChooseMap() {
 
         // --- update hover based on mouse ---
         selectMapScreen.updateHover(input.mouseX, input.mouseY);
@@ -272,10 +288,10 @@ public class GameController {
     }
 
     // STORY
-    private void startStory() {
+    public void startStory() {
 
         currentState = GameState.STORY;
-        music.stopBGM();
+//        music.stopBGM();
 
         SwingUtilities.invokeLater(() -> {
             frame.getContentPane().removeAll();
@@ -292,12 +308,6 @@ public class GameController {
     }
 
     private void updateStory() {
-
-        if (input.space) {
-            storyScreen.stopVideo();
-            startCountdown();
-            input.space = false;
-        }
     }
 
     private String getStoryVideo(String map) {
@@ -322,19 +332,22 @@ public class GameController {
         currentState = GameState.COUNTDOWN;
         countdownTimer = 3.0;
         countdownValue = 3;
-    }
+        music.stopBGM();
+        music.playSFX("/musics/sfx-countdown.wav");
+        SwingUtilities.invokeLater(() -> {
+            // Hapus StoryScreen dulu
+            frame.getContentPane().removeAll();
 
-    private void updateCountdown(double deltaTime) {
-        countdownTimer -= deltaTime;
-        countdownValue = (int) Math.ceil(countdownTimer);
-        if (countdownTimer <= 0) {
-            startGame();
-        }
+            // Tambahkan gameplay panel atau biarkan GamePanel repaint
+            frame.revalidate();
+            frame.repaint();
+        });
     }
 
     // START GAME
     public void startGame() {
         currentState = GameState.PLAYING;
+        music.playLoop("/musics/bgm.wav");
         worldSpeed = WS_MIN;
         timer.start();
         scoreManager.reset();
@@ -344,90 +357,46 @@ public class GameController {
         itemSpawner = new ItemSpawner();
     }
 
+    private void updateCountdown(double deltaTime) {
+        countdownTimer -= deltaTime;
+        countdownValue = (int) Math.ceil(countdownTimer); // 3, 2, 1
+        if (countdownTimer <= -1) {
+            startGame();
+        }
+    }
+
     // PLAYING
     private void updatePlaying(double deltaTime) {
-
-        timer.update(deltaTime);
-
-        scoreManager.update(
-                deltaTime,
-                player.getCurrentSpeed()
-        );
-
-        nitroSystem.update(deltaTime);
-
-        slowMotionSystem.update(deltaTime);
-
-        player.update(input, deltaTime);
-
-        // Pause
-        if (input.pause && !pausePressed) {
-
-            pausePressed = true;
-
-            currentState = GameState.PAUSE;
-        }
-
-        if (!input.pause) {
-            pausePressed = false;
-        }
-
-        // Enemy collision
-        for (Enemy enemy : enemySpawner.getEnemies()) {
-
-            if (CollisionDetector.isColliding(
-                    player,
-                    enemy,
-                    HITBOX_TOLERANCE
-            )) {
-
-                currentState = GameState.GAMEOVER;
-
-                gameOverTimer = 0;
-            }
-        }
-
-        // Time up
-        if (timer.isTimeUp()) {
-
-            scoreManager.finalizeScore();
-
-            currentState = GameState.GAMEOVER;
-
-            gameOverTimer = 0;
-        }
+        updateSystems(deltaTime);
+        updateWorldSpeed(deltaTime);
+        handleGameplayInput(deltaTime);
+        updateSpawner();
+        checkEnemyCollision();
+        checkItemCollision();
+        checkGameOver();
     }
 
     // SCORE
     private void updateScore() {
-
         if (input.restart && !restartPressed) {
-
             restartPressed = true;
-
             restartGame();
         }
-
         if (!input.restart) {
             restartPressed = false;
         }
-
         if (input.backToMenu && !backToMenuPressed) {
-
             backToMenuPressed = true;
-
             goToMenu();
         }
-
         if (!input.backToMenu) {
             backToMenuPressed = false;
         }
     }
 
-    // RESTART
+    // Restart
     public void restartGame() {
         timer.reset();
-        gameOverTimer = 0;
         scoreManager.reset();
         nitroSystem.reset();
         slowMotionSystem.reset();
@@ -437,15 +406,40 @@ public class GameController {
         startCountdown();
     }
 
+    // Pause
+    private void updatePause() {
+        if (input.pause && !pausePressed) {
+            pausePressed = true;
+            music.resumeBGM();
+            currentState = GameState.PLAYING;
+        }
+        if (!input.pause) {
+            pausePressed = false;
+        }
+        if (input.restart && !restartPressed) {
+            restartPressed = true;
+            restartGame();
+        }
+        if (!input.restart) {
+            restartPressed = false;
+        }
+
+        if (input.backToMenu && !backToMenuPressed) {
+            backToMenuPressed = true;
+            goToMenu();
+        }
+        if (!input.backToMenu) {
+            backToMenuPressed = false;
+        }
+    }
+
     // MENU
     public void goToMenu() {
 
         currentState = GameState.MENU;
         timer.reset();
-        gameOverTimer = 0;
         enemySpawner = new EnemySpawner();
         itemSpawner = new ItemSpawner();
-        music.playLoop("/musics/bgm.wav");
 
         SwingUtilities.invokeLater(() -> {
             frame.getContentPane().removeAll();
@@ -456,60 +450,186 @@ public class GameController {
 
     }
 
-    private void updatePause() {
-        if (input.pause && !pausePressed) {
-            pausePressed = true;
-            currentState = GameState.PLAYING;
-        }
-        if (!input.pause) {
-            pausePressed = false;
-        }
-    }
-
-    private void updateGameOver(double deltaTime) {
-        gameOverTimer += deltaTime;
-        if (gameOverTimer >= GAMEOVER_DELAY) {
-            currentState = GameState.SCORE;
-        }
-    }
-
     // EXIT
     public void exitGame() {
         System.exit(0);
     }
 
-    // RENDER
-    public void render(Graphics g, int w, int h) {
+//  GAMEPLAY SUBSYSTEM
+    private void updateSystems(double deltaTime) {
+        timer.update(deltaTime);
+        scoreManager.update(
+                deltaTime,
+                worldSpeed);
+        nitroSystem.update(deltaTime);
+        slowMotionSystem.update(deltaTime);
+        player.update(input, deltaTime);
+    }
 
-        switch (currentState) {
+    private void updateWorldSpeed(double deltaTime) {
+        double targetSpeed = WS_NORM;
+        // GAS
+        if (input.up) {
+            targetSpeed = WS_MAX;
+        }
+        // BOOST ITEM
+        if (player.isBoostItemActive()) {
+            targetSpeed += WS_BOOST_BONUS;
+        }
+        // NITRO
+        if (player.isNitroActive()) {
+            double nitroBoost = player.getNitroBoost();
+            worldSpeed += nitroBoost * deltaTime * 20;
+            worldSpeed += 0.08;
+            targetSpeed += nitroBoost;
+        }
+        // MAX ALLOWED SPEED
+        double maxAllowedSpeed = WS_MAX;
+        if (player.isBoostItemActive()) {
+            maxAllowedSpeed += WS_BOOST_BONUS;
+        }
+        if (player.isNitroActive()) {
+            maxAllowedSpeed += player.getNitroBoost();
+        }
+        // SMOOTH ACCELERATION
+        if (worldSpeed < targetSpeed) {
+            worldSpeed += WS_ACCEL * deltaTime;
+            if (worldSpeed > targetSpeed) {
+                worldSpeed = targetSpeed;
+            }
+        } else {
+            worldSpeed -= WS_ACCEL * deltaTime;
+            if (worldSpeed < WS_MIN) {
+                worldSpeed = WS_MIN;
+            }
+        }
+        // PASSIVE SPEED
+        worldSpeed += WS_PASSIVE * deltaTime;
+        // FINAL CLAMP
+        if (worldSpeed > maxAllowedSpeed) {
+            worldSpeed = maxAllowedSpeed;
+        }
+    }
 
-            case MENU:
-                homeScreen.draw(g, w, h);
+    private void handleGameplayInput(double deltaTime) {
+        // Input Pause
+        if (input.pause && !pausePressed) {
+            pausePressed = true;
+            music.pauseBGM();
+            currentState = GameState.PAUSE;
+        }
+        if (!input.pause) {
+            pausePressed = false;
+        }
+        // input nitro & cek supaya ga spam
+        if (nitroFeedbackTimer > 0) {
+            nitroFeedbackTimer -= deltaTime;
+            if (nitroFeedbackTimer <= 0) {
+                nitroFeedback = "";
+            }
+        }
+        if (input.nitro && !nitroPressed) {
+            nitroPressed = true;
+            NitroSystem.NitroTiming timing = nitroSystem.activate();
+            player.applyNitro(timing);
+            switch (timing) {
+                case PERFECT:
+                    nitroFeedback = "PERFECT!";
+                    nitroFeedbackTimer = FEEDBACK_DURATION;
+                    break;
+                case GOOD:
+                    nitroFeedback = "GOOD!";
+                    nitroFeedbackTimer = FEEDBACK_DURATION;
+                    break;
+                case MISS:
+                    nitroFeedback = "MISS!";
+                    nitroFeedbackTimer = FEEDBACK_DURATION;
+                    break;
+            }
+        }
+        if (itemFeedbackTimer > 0) {
+            itemFeedbackTimer -= deltaTime;
+            if (itemFeedbackTimer <= 0) {
+                itemFeedback = "";
+            }
+        }
+        if (!input.nitro) {
+            nitroPressed = false;
+        }
+        // cek input slow motion
+        if (input.slowMotion && !slowPressed) {
+            slowPressed = true;
+            slowMotionSystem.activate();
+        }
+        if (!input.slowMotion) {
+            slowPressed = false;
+        }
+    }
+
+    private void updateSpawner() {
+        double difficultySpeed = DifficultyScaler.getSpeedMultiplier(scoreManager.getScore());
+        double speedMultiplier = slowMotionSystem.getSpeedMultiplier() * difficultySpeed;
+        DifficultyScaler.apply(scoreManager.getScore(), enemySpawner);
+        enemySpawner.update(worldSpeed, GameConfig.SCREEN_HEIGHT, speedMultiplier, itemSpawner.getItems());
+        itemSpawner.update(worldSpeed, GameConfig.SCREEN_HEIGHT, speedMultiplier, enemySpawner.getEnemies());
+    }
+
+    private void checkEnemyCollision() {
+        for (Enemy enemy : enemySpawner.getEnemies()) {
+            if (CollisionDetector.isColliding(player, enemy, HITBOX_TOLERANCE)) {
+                scoreManager.addTimeBonus(timer.getTimeLeft());
+                currentState = GameState.SCORE;
+            }
+        }
+    }
+
+    private void checkItemCollision() {
+        Item toRemove = null;
+        for (Item item : itemSpawner.getItems()) {
+            if (CollisionDetector.isColliding(player, item, HITBOX_TOLERANCE)) {
+                toRemove = item;
                 break;
+            }
+        }
+        if (toRemove != null) {
+            handleItemPickup(toRemove);
+            itemSpawner.removeItem(toRemove);
+        }
+    }
 
-            case MAP:
-                selectMapScreen.draw(g, w, h);
+    private void checkGameOver() {
+        if (timer.isTimeUp()) {
+            scoreManager.finalizeScore();
+            currentState = GameState.SCORE;
+        }
+    }
+
+    private void handleItemPickup(Item item) {
+        switch (item.getTipe()) {
+            case BOOST:
+                player.applyBoost();
+                itemFeedback = "BOOST!";
+                itemFeedbackColor = Color.ORANGE;
+                itemFeedbackTimer = 1.2;
                 break;
-
-//            case COUNTDOWN:
-//                drawCountdown(g, w, h);
-//                break;
-//
-//            case PLAYING:
-//                drawPlaying(g);
-//                break;
-//
-//            case PAUSE:
-//                drawPause(g, w, h);
-//                break;
-//
-//            case GAMEOVER:
-//                drawGameOver(g, w, h);
-//                break;
-//
-//            case SCORE:
-//                drawScore(g, w, h);
-//                break;
+            case TIME:
+                timer.addTime(5.0);
+                itemFeedback = "+5 SEC";
+                itemFeedbackColor = Color.GREEN;
+                itemFeedbackTimer = 1.2;
+                break;
+            case NITRO:
+                nitroSystem.addNitro();
+                itemFeedback = "+1 NITRO";
+                itemFeedbackColor = Color.CYAN;
+                itemFeedbackTimer = 1.2;
+                break;
+            case SLOWMOTION:
+                slowMotionSystem.addCharge();
+                itemFeedback = "SLOW READY";
+                itemFeedbackColor = Color.CYAN;
+                itemFeedbackTimer = 1.2;
+                break;
         }
     }
 
@@ -523,6 +643,14 @@ public class GameController {
         return currentState;
     }
 
+    public HomeScreen getHomeScreen() {
+        return homeScreen;
+    }
+
+    public SelectMapScreen getChooseMap() {
+        return selectMapScreen;
+    }
+
     public JComponent getActiveScreen() {
 
         switch (currentState) {
@@ -530,7 +658,7 @@ public class GameController {
             case MENU:
                 return homeScreen;
 
-            case MAP:
+            case CHOOSE_MAP:
                 return selectMapScreen;
 
             case STORY:
@@ -539,6 +667,10 @@ public class GameController {
             default:
                 return null;
         }
+    }
+
+    public double getTimeLeft() {
+        return timer.getTimeLeft();
     }
 
     public Player getPlayer() {
@@ -553,16 +685,8 @@ public class GameController {
         return itemSpawner.getItems();
     }
 
-    public double getTimeLeft() {
-        return timer.getTimeLeft();
-    }
-
     public int getScore() {
         return scoreManager.getScore();
-    }
-
-    public int getBestScore() {
-        return scoreManager.getBestScore();
     }
 
     public int getNitroCount() {
@@ -598,14 +722,37 @@ public class GameController {
     }
 
     public int getSpeedKmh() {
-        return player.getSpeedKmh();
+        double maxPossibleSpeed = WS_MAX + WS_BOOST_BONUS + 3.0;
+        double ratio = (worldSpeed - WS_MIN) / (maxPossibleSpeed - WS_MIN);
+        ratio = Math.max(0, Math.min(1, ratio));
+        return (int) (60 + ratio * 180);
     }
 
     public int getCountdownValue() {
         return countdownValue;
     }
 
-    public double getGameOverTimer() {
-        return gameOverTimer;
+    public int getBestScore() {
+        return scoreManager.getBestScore();
+    }
+
+    public String getNitroFeedback() {
+        return nitroFeedback;
+    }
+
+    public double getBarPosition() {
+        return nitroSystem.getBarPosition();
+    }
+
+    public double getWorldSpeed() {
+        return worldSpeed;
+    }
+
+    public String getItemFeedback() {
+        return itemFeedback;
+    }
+
+    public Color getItemFeedbackColor() {
+        return itemFeedbackColor;
     }
 }

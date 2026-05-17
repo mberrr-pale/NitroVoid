@@ -10,19 +10,22 @@ public class MusicSystem {
     // =======================
     private Clip bgmClip;
     private String currentBgmPath;
+    private long bgmPosition = 0; // remember current frame for pause
 
     // =======================
     // GLOBAL STATE
     // =======================
     private boolean volumeOn = true;
+    private boolean bgmPaused = false;
 
     // =======================
     // PLAY BGM LOOP
     // =======================
     public void playLoop(String path) {
         stopBGM(); // stop existing BGM
-
         currentBgmPath = path;
+        bgmPosition = 0;
+        bgmPaused = false;
 
         try {
             URL url = getClass().getResource(path);
@@ -35,8 +38,6 @@ public class MusicSystem {
                 bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
                 bgmClip.start();
             }
-            // Jika volume off, jangan start, tapi clip siap dimainkan saat unmute
-
         } catch (Exception e) {
             System.out.println("BGM error: " + e.getMessage());
         }
@@ -50,6 +51,28 @@ public class MusicSystem {
             bgmClip.stop();
             bgmClip.close();
             bgmClip = null;
+            bgmPosition = 0;
+            bgmPaused = false;
+        }
+    }
+
+    // =======================
+    // PAUSE / RESUME BGM
+    // =======================
+    public void pauseBGM() {
+        if (bgmClip != null && bgmClip.isActive()) {
+            bgmPosition = bgmClip.getMicrosecondPosition();
+            bgmClip.stop();
+            bgmPaused = true;
+        }
+    }
+
+    public void resumeBGM() {
+        if (bgmClip != null && bgmPaused && volumeOn) {
+            bgmClip.setMicrosecondPosition(bgmPosition);
+            bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+            bgmClip.start();
+            bgmPaused = false;
         }
     }
 
@@ -78,19 +101,15 @@ public class MusicSystem {
     // VOLUME CONTROL
     // =======================
     public void setVolume(boolean on) {
-        if (volumeOn == on) {
-            return; // tidak perlu toggle jika sama
-        }
+        if (volumeOn == on) return;
         volumeOn = on;
 
         if (volumeOn) {
-            // jika BGM ada dan mute sebelumnya, mulai lagi
-            if (bgmClip != null) {
+            if (bgmClip != null && !bgmPaused) {
                 bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
                 bgmClip.start();
             }
         } else {
-            // mute instan dengan stop clip
             if (bgmClip != null) {
                 bgmClip.stop();
             }
@@ -101,9 +120,6 @@ public class MusicSystem {
         return volumeOn;
     }
 
-    // =======================
-    // TOGGLE VOLUME
-    // =======================
     public void toggleVolume() {
         setVolume(!volumeOn);
     }
@@ -113,5 +129,9 @@ public class MusicSystem {
     // =======================
     public boolean isPlaying() {
         return bgmClip != null && bgmClip.isActive();
+    }
+
+    public boolean isPaused() {
+        return bgmPaused;
     }
 }

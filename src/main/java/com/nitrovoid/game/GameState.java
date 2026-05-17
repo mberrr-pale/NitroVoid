@@ -2,7 +2,7 @@ package com.nitrovoid.game;
 
 public enum GameState {
     MENU,
-    MAP,
+    CHOOSE_MAP,   
     STORY,
     COUNTDOWN,
     PLAYING,

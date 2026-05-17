@@ -21,7 +21,7 @@ public class ScoreManager {
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
-        score += (int)(timeLeft * 50);
+        score += (int)(timeLeft * 5);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
         updateBestScore();
     }

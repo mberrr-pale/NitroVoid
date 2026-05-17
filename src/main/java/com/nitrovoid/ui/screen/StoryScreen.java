@@ -9,7 +9,6 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.control.Label;
 import javafx.geometry.Insets;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
@@ -23,11 +22,12 @@ public class StoryScreen extends JPanel {
     private MediaPlayer mediaPlayer;
     private MediaView mediaView;
 
-    private Runnable onFinish;
     private String currentVideoPath;
+    private boolean skipped = false;
+    private Runnable onFinishOrSkip;
 
     public StoryScreen(Runnable onFinish) {
-        this.onFinish = onFinish;
+        this.onFinishOrSkip = onFinish;
 
         setLayout(new BorderLayout());
         setBackground(java.awt.Color.BLACK);
@@ -47,6 +47,7 @@ public class StoryScreen extends JPanel {
     // =====================================================
     public void playVideo(String videoPath) {
         this.currentVideoPath = videoPath;
+        this.skipped = false;
 
         Platform.runLater(() -> {
             cleanupMedia();
@@ -145,17 +146,27 @@ public class StoryScreen extends JPanel {
     // =====================================================
     // FLOW CONTROL
     // =====================================================
-    private void skipVideo() {
-        System.out.println("[StoryScreen] skipped");
-        finishVideo();
+    public void skipVideo() {
+        if (skipped) {
+            return;
+        }
+        skipped = true;
+
+        stopVideo();
+        cleanupMedia();
+        clearScene();
+
+        if (onFinishOrSkip != null) {
+            SwingUtilities.invokeLater(onFinishOrSkip);
+        }
     }
 
     private void finishVideo() {
         cleanupMedia();
         clearScene();
 
-        if (onFinish != null) {
-            SwingUtilities.invokeLater(onFinish);
+        if (onFinishOrSkip != null) {
+            SwingUtilities.invokeLater(onFinishOrSkip); // langsung masuk countdown
         }
     }
 

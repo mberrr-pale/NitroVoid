@@ -3,6 +3,7 @@ package com.nitrovoid.system;
 import com.nitrovoid.entity.Item;
 import com.nitrovoid.entity.Item.TipeItem;
 import com.nitrovoid.entity.Enemy;
+import com.nitrovoid.game.GameConfig;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -12,8 +13,8 @@ public class ItemSpawner {
     private Random random = new Random();
     private long lastSpawnTime = 0;
     private final long spawnInterval = 4000; 
-    private final int ROAD_LEFT = 100;
-    private final int ROAD_RIGHT = 700;
+    private final int ROAD_LEFT = GameConfig.ROAD_LEFT;
+    private final int ROAD_RIGHT = GameConfig.ROAD_RIGHT;
     private final int MIN_ITEM_GAP = 100;
     private final int MIN_ITEM_ENEMY_GAP = 60;
     

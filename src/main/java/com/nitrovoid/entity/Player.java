@@ -4,6 +4,7 @@ import com.nitrovoid.input.InputHandler;
 import java.awt.Graphics;
 import java.awt.Color;
 import com.nitrovoid.system.NitroSystem;
+import com.nitrovoid.game.GameConfig;
 
 public class Player extends Kendaraan {     
     private double currentSpeed = 5.0;
@@ -19,14 +20,14 @@ public class Player extends Kendaraan {
     private boolean nitroActive = false;
     private double  nitroTimer  = 0;
     public  double  nitroBoost  = 0;  
-    public static final int ROAD_LEFT  = 100;
-    public static final int ROAD_RIGHT = 700;
+    public static final int ROAD_LEFT  = GameConfig.ROAD_LEFT;
+    public static final int ROAD_RIGHT = GameConfig.ROAD_RIGHT;
     private int baseY = 520;
     private static final int FORWARD_OFFSET = 350;
 
     public Player() {
-        x = 377;
-        y = 520;
+        x = GameConfig.PLAYER_START_X;
+        y = GameConfig.PLAYER_START_Y;
         width  = 45;
         height = 80;
     }
@@ -99,8 +100,6 @@ public class Player extends Kendaraan {
             }
         }
         x += (int) lateralSpeed;
-        // Tidak ada hard clamp — batas jalan tetap ada tapi bisa "keluar" sedikit
-        // Kalau mau tetap ada batas keras, uncomment ini:
         if (x < ROAD_LEFT) x = ROAD_LEFT;
         if (x > ROAD_RIGHT - width) x = ROAD_RIGHT - width;
 
