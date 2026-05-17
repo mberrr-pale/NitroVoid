@@ -22,7 +22,7 @@ public class Player extends Kendaraan {
     public  double  nitroBoost  = 0;  
     public static final int ROAD_LEFT  = GameConfig.ROAD_LEFT;
     public static final int ROAD_RIGHT = GameConfig.ROAD_RIGHT;
-    private int baseY = 520;
+    private int baseY = 460;
     private static final int FORWARD_OFFSET = 350;
 
     public Player() {

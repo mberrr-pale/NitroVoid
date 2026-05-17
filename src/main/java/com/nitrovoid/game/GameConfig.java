@@ -10,8 +10,5 @@ public class GameConfig {
     public static final int ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
     // PLAYER
     public static final int PLAYER_START_X = 377;
-    public static final int PLAYER_START_Y = 520;
-    // HUD
-    public static final int NITRO_BAR_X = 220;
-    public static final int NITRO_BAR_Y = 520;
+    public static final int PLAYER_START_Y = 460;
 }

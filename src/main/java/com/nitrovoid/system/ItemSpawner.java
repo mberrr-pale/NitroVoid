@@ -46,11 +46,12 @@ public class ItemSpawner {
             if (!tooCloseToOtherItems(ix, iy) &&
                 (enemies == null || !tooCloseToEnemies(ix, iy, enemies))) {
  
-                // Probabilitas: BOOST 50%, NITRO 30%, SLOWMOTION 20%
+                // Probabilitas: BOOST 40%, TIME 40% NITRO 10%, SLOWMOTION 10%
                 int roll = random.nextInt(100);
                 TipeItem tipe;
-                if      (roll < 50) tipe = TipeItem.BOOST;
-                else if (roll < 80) tipe = TipeItem.NITRO;
+                if      (roll < 40) tipe = TipeItem.BOOST;
+                else if (roll < 80) tipe = TipeItem.TIME;
+                else if (roll < 90) tipe = TipeItem.NITRO;
                 else                tipe = TipeItem.SLOWMOTION;
  
                 items.add(new Item(ix, iy, tipe));

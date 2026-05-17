@@ -15,13 +15,13 @@ public class ScoreManager {
     }
 
     public void update(double deltaTime, double currentSpeed) {
-        scoreAccumulator += currentSpeed * deltaTime * 8;
+        scoreAccumulator += currentSpeed * deltaTime * 15;
         score = (int) scoreAccumulator;
     }
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
-        score += (int)(timeLeft * 5);
+        score += (int)(timeLeft * 10);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
         updateBestScore();
     }

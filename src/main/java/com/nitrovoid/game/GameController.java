@@ -55,6 +55,10 @@ public class GameController {
     private String itemFeedback = "";
     private Color itemFeedbackColor = Color.WHITE;
     private double itemFeedbackTimer = 0;
+//  Select map
+    public enum MapType {KTT, LIWET, MGT};
+    private MapType selectedMap = MapType.KTT;
+    private int selectedMapIndex;
 
     
     public GameController(Player player, InputHandler input) {
@@ -118,22 +122,68 @@ public class GameController {
             enterPressed = false;
         }
     }
-    private void updateChooseMap() {
-        if (input.enter && !enterPressed) {
-            enterPressed = true;
-            startStory();
+private void updateChooseMap() {
+
+    // MOVE UP
+    if (input.up) {
+
+        selectedMapIndex--;
+
+        if (selectedMapIndex < 0) {
+            selectedMapIndex = 2;
         }
-        if (!input.enter) {
-            enterPressed = false;
-        }
-        if (input.backToMenu && !backToMenuPressed) {
-            backToMenuPressed = true;
-            goToMenu();
-        }
-        if (!input.backToMenu) {
-            backToMenuPressed = false;
-        }
+
+        input.up = false;
     }
+
+    // MOVE DOWN
+    if (input.down) {
+
+        selectedMapIndex++;
+
+        if (selectedMapIndex > 2) {
+            selectedMapIndex = 0;
+        }
+
+        input.down = false;
+    }
+
+    // APPLY SELECTED MAP
+    switch (selectedMapIndex) {
+
+        case 0:
+            selectedMap = MapType.KTT;
+            break;
+
+        case 1:
+            selectedMap = MapType.LIWET;
+            break;
+
+        case 2:
+            selectedMap = MapType.MGT;
+            break;
+    }
+
+    // ENTER
+    if (input.enter && !enterPressed) {
+        enterPressed = true;
+        startStory();
+    }
+
+    if (!input.enter) {
+        enterPressed = false;
+    }
+
+    // BACK
+    if (input.backToMenu && !backToMenuPressed) {
+        backToMenuPressed = true;
+        goToMenu();
+    }
+
+    if (!input.backToMenu) {
+        backToMenuPressed = false;
+    }
+}
     private void updateStory() {
         if (input.space) {
             startCountdown();
@@ -426,4 +476,6 @@ public class GameController {
     public double getWorldSpeed() { return worldSpeed; }
     public String getItemFeedback() { return itemFeedback; }
     public Color getItemFeedbackColor() { return itemFeedbackColor; }
+    public MapType getSelectedMap() {return selectedMap;}
+    public int getSelectedMapIndex() {return selectedMapIndex;}    
 }

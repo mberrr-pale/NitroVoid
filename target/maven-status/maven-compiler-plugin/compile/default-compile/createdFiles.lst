@@ -25,3 +25,4 @@ com\nitrovoid\entity\Item.class
 com\nitrovoid\ui\GameplayScreen.class
 com\nitrovoid\game\GameController.class
 com\nitrovoid\main\Main.class
+com\nitrovoid\game\GameController$MapType.class

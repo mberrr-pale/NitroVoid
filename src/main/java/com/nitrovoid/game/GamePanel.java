@@ -37,6 +37,7 @@ public class GamePanel extends JPanel implements Runnable {
         controller = new GameController(player, input);
         controller.setCurrentState(GameState.MENU);
         gameplayScreen = new GameplayScreen();
+        gameplayScreen.setMap(controller.getSelectedMap());
     }
 
     public void startGameThread() {
@@ -102,32 +103,63 @@ public class GamePanel extends JPanel implements Runnable {
     private void drawMenu(Graphics g) {
         controller.getHomeScreen().draw(g, width, height);
     }
-    private void drawChooseMap(Graphics g) {
-        Font defaultFont = g.getFont();
-        
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width, height);
-        
+private void drawChooseMap(Graphics g) {
+
+    Font defaultFont = g.getFont();
+
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, width, height);
+
+    g.setColor(Color.WHITE);
+    g.setFont(defaultFont.deriveFont(Font.BOLD, 28f));
+
+    g.drawString(
+        "CHOOSE MAP",
+        width / 2 - 100,
+        120
+    );
+
+    g.setFont(defaultFont.deriveFont(Font.BOLD, 24f));
+
+    // KETINTANG
+    if(controller.getSelectedMapIndex() == 0){
+        g.setColor(Color.CYAN);
+    } else {
         g.setColor(Color.WHITE);
-        g.setFont(defaultFont.deriveFont(24f));
-        
-        g.drawString(
-            "PILIH MAP",
-            width / 2 - 55,
-            height / 2 - 60
-        );
-        g.setFont(defaultFont.deriveFont(14f));
-        g.drawString(
-            "← / → — Pilih Map",
-            width / 2 - 60,
-            height / 2 + 40
-        );
-        g.drawString(
-            "ENTER — Mulai",
-            width / 2 - 60,
-            height / 2 + 60
-        );
     }
+
+    g.drawString(
+        "KETINTANG",
+        width / 2 - 80,
+        220
+    );
+
+    // LIWET
+    if(controller.getSelectedMapIndex() == 1){
+        g.setColor(Color.CYAN);
+    } else {
+        g.setColor(Color.WHITE);
+    }
+
+    g.drawString(
+        "LIWET",
+        width / 2 - 50,
+        290
+    );
+
+    // MAGETAN
+    if(controller.getSelectedMapIndex() == 2){
+        g.setColor(Color.CYAN);
+    } else {
+        g.setColor(Color.WHITE);
+    }
+
+    g.drawString(
+        "MAGETAN",
+        width / 2 - 70,
+        360
+    );
+}
     private void drawStory(Graphics g) {
         Font defaultFont = g.getFont();
         
@@ -150,12 +182,13 @@ public class GamePanel extends JPanel implements Runnable {
     }
     private void drawCountdown(Graphics g) {
         gameplayScreen.drawCountDown(g, controller, width, height);
+        gameplayScreen.setMap(controller.getSelectedMap());
     }
     private void drawGameplay(Graphics g) {
         if (controller.getCurrentState() == GameState.PLAYING) {
             Font defaultFont = g.getFont();
             // BACKGROUND
-            gameplayScreen.drawBackground(g, width, height);
+            gameplayScreen.drawLoadMap(g, width, height);
             // ITEM
             gameplayScreen.drawItems(g, controller);
             // ENTITY
