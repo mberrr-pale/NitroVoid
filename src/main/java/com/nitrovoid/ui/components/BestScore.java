@@ -1,6 +1,6 @@
 package com.nitrovoid.ui.components;
 
-import com.nitrovoid.system.ScoreManager;
+import com.nitrovoid.system.SaveManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -39,7 +39,7 @@ public class BestScore {
 
         g.setFont(new Font("Arial", Font.BOLD, 22));
         g.setColor(Color.YELLOW);
-        int bestScore = ScoreManager.getInstance().getBestScore();
+        int bestScore = SaveManager.getInstance().getBestScore();
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
         String formattedScore = nf.format(bestScore);
 

@@ -877,7 +877,7 @@ private void handleItemPickup(Item item){
     }
 
     public int getBestScore() {
-        return scoreManager.getBestScore();
+        return saveManager.getBestScore();
     }
 
     public double getBarPosition() {

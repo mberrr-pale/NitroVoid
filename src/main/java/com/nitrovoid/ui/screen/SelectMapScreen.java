@@ -5,7 +5,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import com.nitrovoid.system.ScoreManager;
+import com.nitrovoid.system.SaveManager;
 import com.nitrovoid.ui.components.BestScore;
 
 public class SelectMapScreen extends JPanel {
@@ -68,7 +68,7 @@ public class SelectMapScreen extends JPanel {
         };
         // ================= BEST SCORE =================
         bestScoreUI = new BestScore();
-        int score = ScoreManager.getInstance().getBestScore();
+        int score = SaveManager.getInstance().getBestScore();
         if (score >= 10000) {
             maps[1].locked = false;
         }
