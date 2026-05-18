@@ -1,5 +1,6 @@
 package com.nitrovoid.ui.components;
 
+import com.nitrovoid.system.ScoreManager;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -10,23 +11,12 @@ import java.util.Locale;
 
 public class BestScore {
 
-    private int bestScore;
     private Image trophyImg;
 
-    public BestScore(int initialScore) {
-        this.bestScore = initialScore;
-
+    public BestScore() {
         trophyImg = Toolkit.getDefaultToolkit().getImage(
                 getClass().getResource("/images/trofi.png")
         );
-    }
-
-    public void setBestScore(int score) {
-        this.bestScore = score;
-    }
-
-    public int getBestScore() {
-        return bestScore;
     }
 
     public void draw(Graphics g, int x, int y) {
@@ -49,6 +39,7 @@ public class BestScore {
 
         g.setFont(new Font("Arial", Font.BOLD, 22));
         g.setColor(Color.YELLOW);
+        int bestScore = ScoreManager.getInstance().getBestScore();
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
         String formattedScore = nf.format(bestScore);
 

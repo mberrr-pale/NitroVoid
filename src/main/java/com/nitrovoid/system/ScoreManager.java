@@ -1,14 +1,30 @@
 package com.nitrovoid.system;
 
 public class ScoreManager {
-    private double score;
-    private double scoreAccumulator = 0;
-    private int bestScore = 0;
 
-    public ScoreManager() {
+    private static ScoreManager instance;
+    private double score;
+    private double scoreAccumulator;
+    private int bestScore;
+
+    // Constructor
+    private ScoreManager() {
         score = 0;
+        scoreAccumulator = 0;
+        bestScore = 0;
     }
 
+    // Singleton
+    public static ScoreManager getInstance() {
+
+        if (instance == null) {
+            instance = new ScoreManager();
+        }
+
+        return instance;
+    }
+
+    // Reset score saat game restart
     public void reset() {
         score = 0;
         scoreAccumulator = 0;
@@ -21,7 +37,7 @@ public class ScoreManager {
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
-        score += (int)(timeLeft * 5);
+        score += (int) (timeLeft * 5);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
         updateBestScore();
     }
@@ -61,6 +77,11 @@ public class ScoreManager {
     //     }
     // }
 
-    public int getScore()     { return (int) score; }
-    public int getBestScore() { return bestScore; }
+    public int getScore() {
+        return (int) score;
+    }
+
+    public int getBestScore() {
+        return bestScore;
+    }
 }

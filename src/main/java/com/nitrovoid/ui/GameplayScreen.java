@@ -37,9 +37,9 @@ public class GameplayScreen {
     private BufferedImage nitroBarFrame;
     private BufferedImage pauseBtn;
     
+    public void setMap (GameController.MapType map){loadMap(map);}
     public GameplayScreen() { 
         loadCountDown();
-        loadBackgrounds(); 
         loadVehicles(); 
         loadItems(); 
         loadHUD(); }
@@ -65,12 +65,29 @@ public class GameplayScreen {
                 load("/gameplay/countdown/go.png");
     }
     
-    private void loadBackgrounds(){    
-        mapBackground = 
-                load("/gameplay/maps/ktt_map.png");
-        road = 
-                load("/gameplay/maps/ktt_road.png");
-    }    
+    private void loadMap(GameController.MapType map){
+        switch(map){
+            case KTT :
+                mapBackground =
+                    load("/gameplay/maps/ktt_map.png");
+                road =
+                    load("/gameplay/maps/ktt_road.png");
+                break;
+            case LIWET:
+                mapBackground =
+                    load("/gameplay/maps/liwet_map.png");
+                road =
+                    load("/gameplay/maps/liwet_road.png");
+                break;
+
+            case MGT:
+                mapBackground =
+                    load("/gameplay/maps/mgt_map.png");
+                road =
+                    load("/gameplay/maps/mgt_road.png");
+                break;
+        }
+    }
     private void loadVehicles() { 
         playerCar = 
                 load("/gameplay/vehicles/player_car.png"); 
@@ -110,7 +127,7 @@ public class GameplayScreen {
         pauseBtn = 
                 load("/gameplay/hud/pause_frame.png");
     }    
-        public void drawCountDown(
+    public void drawCountDown(
             Graphics g,
             GameController controller,
             int width,
@@ -166,7 +183,10 @@ public class GameplayScreen {
                 null
         );
     }
-    public void update(double worldSpeed, int screenHeight) {
+    public void update(double worldSpeed, int screenHeight, boolean paused) {
+        if (paused) {
+            return;
+        }
         mapOffsetY += worldSpeed * 0.2;
         if (mapOffsetY >= screenHeight) {
             mapOffsetY = 0;
@@ -176,7 +196,7 @@ public class GameplayScreen {
             roadOffsetY = 0;
         }
     }
-    public void drawBackground(Graphics g, int width, int height) {
+    public void drawLoadMap(Graphics g, int width, int height) {
         // SIDE ENVIRONMENT
         g.drawImage(mapBackground,0,(int) mapOffsetY,
                     width,height,null);

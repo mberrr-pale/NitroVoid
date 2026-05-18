@@ -1,34 +1,18 @@
 package com.nitrovoid.game;
 
-import java.util.ArrayList;
+import java.util.*;
 import javax.swing.*;
-import java.awt.BorderLayout;
-import java.awt.Graphics;
+import java.awt.*;
 
-import com.nitrovoid.entity.Enemy;
-import com.nitrovoid.entity.Item;
-import static com.nitrovoid.entity.Item.TipeItem.BOOST;
-import static com.nitrovoid.entity.Item.TipeItem.NITRO;
-import static com.nitrovoid.entity.Item.TipeItem.SLOWMOTION;
-import static com.nitrovoid.entity.Item.TipeItem.TIME;
-import com.nitrovoid.entity.Player;
-import static com.nitrovoid.game.GameState.CHOOSE_MAP;
-import static com.nitrovoid.game.GameState.COUNTDOWN;
-import static com.nitrovoid.game.GameState.MENU;
-import static com.nitrovoid.game.GameState.PAUSE;
-import static com.nitrovoid.game.GameState.PLAYING;
-import static com.nitrovoid.game.GameState.SCORE;
-import static com.nitrovoid.game.GameState.STORY;
+import com.nitrovoid.entity.*;
 import com.nitrovoid.input.InputHandler;
 import com.nitrovoid.system.*;
-import static com.nitrovoid.system.NitroSystem.NitroTiming.GOOD;
-import static com.nitrovoid.system.NitroSystem.NitroTiming.MISS;
-import static com.nitrovoid.system.NitroSystem.NitroTiming.PERFECT;
-import com.nitrovoid.ui.screen.HomeScreen;
-import com.nitrovoid.ui.screen.SelectMapScreen;
-import com.nitrovoid.ui.screen.StoryScreen;
+import com.nitrovoid.ui.screen.*;
 import com.nitrovoid.util.CollisionDetector;
-import java.awt.Color;
+
+import static com.nitrovoid.entity.Item.TipeItem.*;
+import static com.nitrovoid.game.GameState.*;
+import static com.nitrovoid.system.NitroSystem.NitroTiming.*;
 
 public class GameController {
 
@@ -42,12 +26,13 @@ public class GameController {
     private final HomeScreen homeScreen;
     private final SelectMapScreen selectMapScreen;
     private final StoryScreen storyScreen;
-
+    private final PauseScreen pauseScreen;
+    private final GameOverScreen gameOverScreen;
     // SYSTEM
     private final MusicSystem music;
 
     private TimerSystem timer = new TimerSystem();
-    private ScoreManager scoreManager = new ScoreManager();
+    private ScoreManager scoreManager = ScoreManager.getInstance();
     private EnemySpawner enemySpawner = new EnemySpawner();
     private ItemSpawner itemSpawner = new ItemSpawner();
     private NitroSystem nitroSystem = new NitroSystem();
@@ -71,6 +56,13 @@ public class GameController {
     private Color itemFeedbackColor = Color.WHITE;
     private double itemFeedbackTimer = 0;
 
+    //  Select map
+    public enum MapType {
+        KTT, LIWET, MGT
+    };
+    private MapType selectedMap = MapType.KTT;
+    private int selectedMapIndex;
+
     private boolean nitroPressed = false; // biar ga spam
     private boolean slowPressed = false; // biar ga spam
     private boolean pausePressed = false; // untuk pause
@@ -78,8 +70,6 @@ public class GameController {
     private boolean mouseClicked = false;
     private boolean restartPressed = false;
     private boolean backToMenuPressed = false;
-    // MAP
-    private String selectedMap = "Ketintang";
 
     // CONSTRUCTOR
     public GameController(JFrame frame, Player player, InputHandler input) {
@@ -91,6 +81,8 @@ public class GameController {
         homeScreen = new HomeScreen(music);
         selectMapScreen = new SelectMapScreen();
         storyScreen = new StoryScreen(() -> SwingUtilities.invokeLater(this::startCountdown));
+        pauseScreen = new PauseScreen(music);
+        gameOverScreen = new GameOverScreen(this, GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT);
 
         initializeGame();
     }
@@ -129,6 +121,7 @@ public class GameController {
                 break;
             case SCORE:
                 updateScore();
+                gameOverScreen.update();
                 break;
             default:
                 break;
@@ -176,6 +169,9 @@ public class GameController {
         if (!input.mouseLeftPressed) {
             mouseClicked = false;
         }
+        if (music.isVolumeOn()) {
+            music.resumeAfterPause();
+        }
     }
 
     private void handleMenuSelect(int selected) {
@@ -222,16 +218,16 @@ public class GameController {
         }
 
         // --- ENTER key to select/start ---
+// contoh untuk Enter
         if (input.enter && !enterPressed) {
             enterPressed = true;
             int idx = selectMapScreen.getSelectedIndex();
-            System.out.println("[Debug] Enter pressed. Current selected index: " + idx);
 
-            if (idx >= 0) {
-                selectMapScreen.setSelectedIndex(idx); // select map
-                triggerStartGame(idx); // start game immediately
+            // cek apakah map unlocked
+            if (idx >= 0 && !selectMapScreen.isMapLocked(idx)) {
+                triggerStartGame(idx);
             } else {
-                System.out.println("[Debug] No map selected yet!");
+                System.out.println("[Debug] Map locked! Tidak bisa dimainkan.");
             }
         }
 
@@ -245,13 +241,12 @@ public class GameController {
 
             int clicked = selectMapScreen.checkMouseClick(input.mouseX, input.mouseY);
 
-            if (clicked == -3) {
-                // PLAY button clicked → start game
-                int selectedIdx = selectMapScreen.getSelectedIndex();
-                if (selectedIdx >= 0) {
-                    triggerStartGame(selectedIdx);
+            if (clicked == -3) { // start button
+                int idx = selectMapScreen.getSelectedIndex();
+                if (!selectMapScreen.isMapLocked(idx)) {
+                    triggerStartGame(idx);
                 } else {
-                    System.out.println("[Debug] PLAY clicked but no map selected!");
+                    System.out.println("[Debug] Map locked! Tidak bisa dimainkan.");
                 }
             } else if (clicked == -4) {
                 // BACK button clicked → return to main menu
@@ -270,20 +265,21 @@ public class GameController {
     }
 
     private void triggerStartGame(int selected) {
+        selectedMapIndex = selected;
         // classic switch
         switch (selected) {
             case 0:
-                selectedMap = "Ketintang";
+                selectedMap = MapType.KTT;
                 break;
             case 1:
-                selectedMap = "Liwet";
+                selectedMap = MapType.LIWET;
                 break;
             case 2:
-                selectedMap = "Magetan";
+                selectedMap = MapType.MGT;
                 break;
             default:
                 return; // do not start story if index invalid
-        }
+            }
         startStory();
     }
 
@@ -291,7 +287,7 @@ public class GameController {
     public void startStory() {
 
         currentState = GameState.STORY;
-//        music.stopBGM();
+        // music.stopBGM();
 
         SwingUtilities.invokeLater(() -> {
             frame.getContentPane().removeAll();
@@ -310,21 +306,25 @@ public class GameController {
     private void updateStory() {
     }
 
-    private String getStoryVideo(String map) {
+    private String getStoryVideo(MapType map) {
         switch (map) {
-
-            case "Ketintang":
+            case KTT:
                 return "/videos/story-game.mp4";
-
-            case "Liwet":
+            case LIWET:
                 return "/videos/story-game.mp4";
-
-            case "Magetan":
+            case MGT:
                 return "/videos/story-game.mp4";
-
             default:
                 return "/videos/storyline.mp4";
         }
+    }
+
+    public MapType getSelectedMap() {
+        return selectedMap;
+    }
+
+    public int getSelectedMapIndex() {
+        return selectedMapIndex;
     }
 
     // COUNTDOWN
@@ -344,6 +344,14 @@ public class GameController {
         });
     }
 
+    private void updateCountdown(double deltaTime) {
+        countdownTimer -= deltaTime;
+        countdownValue = (int) Math.ceil(countdownTimer); // 3, 2, 1
+        if (countdownTimer <= -1) {
+            startGame();
+        }
+    }
+
     // START GAME
     public void startGame() {
         currentState = GameState.PLAYING;
@@ -355,14 +363,6 @@ public class GameController {
         slowMotionSystem.reset();
         enemySpawner = new EnemySpawner();
         itemSpawner = new ItemSpawner();
-    }
-
-    private void updateCountdown(double deltaTime) {
-        countdownTimer -= deltaTime;
-        countdownValue = (int) Math.ceil(countdownTimer); // 3, 2, 1
-        if (countdownTimer <= -1) {
-            startGame();
-        }
     }
 
     // PLAYING
@@ -378,6 +378,11 @@ public class GameController {
 
     // SCORE
     private void updateScore() {
+        // hover update
+        gameOverScreen.updateHover(input.mouseX, input.mouseY);
+        // animasi zoom
+        gameOverScreen.update();
+        // keyboard restart
         if (input.restart && !restartPressed) {
             restartPressed = true;
             restartGame();
@@ -385,12 +390,39 @@ public class GameController {
         if (!input.restart) {
             restartPressed = false;
         }
+        // keyboard back
         if (input.backToMenu && !backToMenuPressed) {
             backToMenuPressed = true;
             goToMenu();
         }
         if (!input.backToMenu) {
             backToMenuPressed = false;
+        }
+        // mouse click
+        if (input.mouseLeftPressed && !mouseClicked) {
+            mouseClicked = true;
+            int clicked = gameOverScreen.checkMouseClick(
+                    input.mouseX,
+                    input.mouseY
+            );
+            switch (clicked) {
+                case 0:
+                    restartGame();
+                    break;
+                case 1:
+                    goToMenu();
+                    break;
+            }
+        }
+        if (!input.mouseLeftPressed) {
+            mouseClicked = false;
+        }
+    }
+
+    // DRAW GameOverScreen
+    public void drawGameOver(Graphics g) {
+        if (gameOverScreen != null) {
+            gameOverScreen.draw(g);
         }
     }
 
@@ -408,25 +440,56 @@ public class GameController {
 
     // Pause
     private void updatePause() {
+        // Update hover tombol volume dan tombol pauseScreen
+        pauseScreen.updateHover(input.mouseX, input.mouseY);
+
+        // Cek klik mouse
+        if (input.mouseLeftPressed && !mouseClicked) {
+            mouseClicked = true;
+
+            int clickedButton = pauseScreen.checkMouseClick(input.mouseX, input.mouseY);
+
+            switch (clickedButton) {
+                case 0: // Resume
+                    currentState = GameState.PLAYING;
+                    music.resumeAfterPause();
+                    break;
+
+                case 1: // Restart
+                    restartGame();
+                    break;
+
+                case 2: // Back to Menu
+                    goToMenu();
+                    break;
+            }
+        }
+
+        if (!input.mouseLeftPressed) {
+            mouseClicked = false;
+        }
+
+        // Tombol keyboard tetap jalan
         if (input.pause && !pausePressed) {
             pausePressed = true;
-            music.resumeBGM();
+            music.resumeAfterPause();
             currentState = GameState.PLAYING;
         }
         if (!input.pause) {
             pausePressed = false;
         }
+
         if (input.restart && !restartPressed) {
-            restartPressed = true;
             restartGame();
+            restartPressed = true;
         }
         if (!input.restart) {
             restartPressed = false;
         }
 
         if (input.backToMenu && !backToMenuPressed) {
-            backToMenuPressed = true;
             goToMenu();
+            backToMenuPressed = true;
         }
         if (!input.backToMenu) {
             backToMenuPressed = false;
@@ -447,7 +510,9 @@ public class GameController {
             frame.revalidate();
             frame.repaint();
         });
-
+        if (music.isVolumeOn()) {
+            music.resumeAfterPause();
+        }
     }
 
     // EXIT
@@ -649,6 +714,14 @@ public class GameController {
 
     public SelectMapScreen getChooseMap() {
         return selectMapScreen;
+    }
+
+    public GameOverScreen getGameOver() {
+        return gameOverScreen;
+    }
+
+    public PauseScreen getPause() {
+        return pauseScreen;
     }
 
     public JComponent getActiveScreen() {

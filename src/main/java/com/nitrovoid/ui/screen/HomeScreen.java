@@ -43,18 +43,9 @@ public class HomeScreen extends JPanel {
 
         playImg = load("/images/play.png");
         exitImg = load("/images/exit.png");
-
-        volumeOnImg = load("/images/volume-on.png");
-        volumeOffImg = load("/images/volume-off.png");
        
-
-        btnVolume = new BtnVolume(
-                music,
-                volumeOnImg,
-                volumeOffImg
-        );
-
-        bestScoreUI = new BestScore(0);
+        btnVolume = new BtnVolume(music);
+        bestScoreUI = new BestScore();
     }
 
     private BufferedImage load(String path) {

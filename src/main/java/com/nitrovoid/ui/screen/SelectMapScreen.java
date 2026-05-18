@@ -4,6 +4,8 @@ import javax.swing.JPanel;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
+import com.nitrovoid.system.ScoreManager;
 import com.nitrovoid.ui.components.BestScore;
 
 public class SelectMapScreen extends JPanel {
@@ -65,8 +67,8 @@ public class SelectMapScreen extends JPanel {
             true) // default locked
         };
         // ================= BEST SCORE =================
-        bestScoreUI = new BestScore(10000);
-        int score = bestScoreUI.getBestScore();
+        bestScoreUI = new BestScore();
+        int score = ScoreManager.getInstance().getBestScore();
         if (score >= 10000) {
             maps[1].locked = false;
         }
@@ -184,6 +186,13 @@ public class SelectMapScreen extends JPanel {
         return -1; // klik di tempat kosong
     }
 
+    public boolean isMapLocked(int index) {
+        if (index < 0 || index >= maps.length) {
+            return true;
+        }
+        return maps[index].locked;
+    }
+
     // ================= DRAW =================
     @Override
     protected void paintComponent(Graphics g) {
@@ -261,9 +270,10 @@ public class SelectMapScreen extends JPanel {
                 g2.drawImage(img, x, y, drawW, drawH, null);
             }
 
-            if (m.locked && m.lock != null) {
-                g2.drawImage(m.lock, b.x + b.width - 28, b.y + 12, 22, 22, null);
-            }
+            // Overlay lock jika map masih terkunci
+//            if (m.locked && m.lock != null) {
+//                g2.drawImage(m.lock, b.x + b.width - 28, b.y + 12, 22, 22, null);
+//            }
         }
 
         // start button

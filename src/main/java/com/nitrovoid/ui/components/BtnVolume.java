@@ -3,6 +3,8 @@ package com.nitrovoid.ui.components;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import com.nitrovoid.system.MusicSystem;
 
 public class BtnVolume {
@@ -16,33 +18,39 @@ public class BtnVolume {
 
     private boolean hovered = false;
 
-    public BtnVolume(MusicSystem music,
-                     BufferedImage imgOn,
-                     BufferedImage imgOff) {
+    private int maxSize = 100;
 
+
+    public BtnVolume(MusicSystem music) {
         this.music = music;
-        this.imgOn = imgOn;
-        this.imgOff = imgOff;
+
+        imgOn = load("/images/volume-on.png");
+        imgOff = load("/images/volume-off.png");
+    }
+
+    // ================= LOAD IMAGE =================
+    private BufferedImage load(String path) {
+        try {
+            return ImageIO.read(getClass().getResource(path));
+        } catch (IOException e) {
+            System.out.println("Missing volume image: " + path);
+            return null;
+        }
     }
 
     // ================= DRAW =================
     public void draw(Graphics g, int screenW) {
+        BufferedImage img = music.isVolumeOn() ? imgOn : imgOff;
 
-        BufferedImage img =
-                music.isVolumeOn() ? imgOn : imgOff;
-
-        if (img == null) return;
-
-        int maxSize = 100;
+        if (img == null) {
+            return;
+        }
 
         int imgW = img.getWidth();
         int imgH = img.getHeight();
 
-        double scale = Math.min(
-                (double) maxSize / imgW,
-                (double) maxSize / imgH
-        );
-
+        // Scale proportionally
+        double scale = Math.min((double) maxSize / imgW, (double) maxSize / imgH);
         int newW = (int) (imgW * scale);
         int newH = (int) (imgH * scale);
 

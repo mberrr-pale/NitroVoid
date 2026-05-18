@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import com.nitrovoid.entity.Player;
 import com.nitrovoid.input.InputHandler;
 import com.nitrovoid.ui.GameplayScreen;
+import com.nitrovoid.ui.screen.PauseScreen;
 
 public class GamePanel extends JPanel implements Runnable {
 
@@ -22,6 +23,7 @@ public class GamePanel extends JPanel implements Runnable {
     InputHandler input;
     GameController controller;
     private GameplayScreen gameplayScreen;
+    private PauseScreen pauseScreen;
 
     public GamePanel(JFrame frame) {
 
@@ -37,6 +39,7 @@ public class GamePanel extends JPanel implements Runnable {
         controller = new GameController(frame, player, input);
         controller.setCurrentState(GameState.MENU);
         gameplayScreen = new GameplayScreen();
+        gameplayScreen.setMap(controller.getSelectedMap());
     }
 
     public void startGameThread() {
@@ -64,7 +67,8 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void update(double deltaTime) {
         controller.update(deltaTime);
-        gameplayScreen.update(controller.getWorldSpeed(), height);
+        boolean paused = (controller.getCurrentState() == GameState.PAUSE);
+        gameplayScreen.update(controller.getWorldSpeed(), height, paused);
     }
 
     @Override
@@ -87,7 +91,7 @@ public class GamePanel extends JPanel implements Runnable {
                 break;
             case PAUSE:
                 drawGameplay(g);
-                drawPause(g);
+                controller.getPause().draw(g, width, height);
                 break;
             case SCORE:
                 drawScore(g);
@@ -107,67 +111,41 @@ public class GamePanel extends JPanel implements Runnable {
 
     private void drawCountdown(Graphics g) {
         gameplayScreen.drawCountDown(g, controller, width, height);
+        gameplayScreen.setMap(controller.getSelectedMap());
     }
 
     private void drawGameplay(Graphics g) {
-        if (controller.getCurrentState() == GameState.PLAYING) {
-            Font defaultFont = g.getFont();
-            // BACKGROUND
-            gameplayScreen.drawBackground(g, width, height);
-            // ITEM
-            gameplayScreen.drawItems(g, controller);
-            // ENTITY
-            gameplayScreen.drawEntities(g, controller);
-            // HUD TOP
-            gameplayScreen.drawHUD(g, controller);
-            // FEEDBACK TEXT
-            if (!controller.getNitroFeedback().isEmpty()) {
-                g.setFont(defaultFont.deriveFont(Font.BOLD, 24f));
-                switch (controller.getNitroFeedback()) {
-                    case "PERFECT!":
-                        g.setColor(Color.GREEN);
-                        break;
-                    case "GOOD!":
-                        g.setColor(Color.YELLOW);
-                        break;
-                    case "MISS!":
-                        g.setColor(Color.RED);
-                        break;
-                    default:
-                        g.setColor(Color.WHITE);
-                        break;
-                }
-                g.drawString(controller.getNitroFeedback(), width / 2 - 60, height - 120);
+        Font defaultFont = g.getFont();
+        // BACKGROUND
+        gameplayScreen.drawLoadMap(g, width, height);
+        // ITEM
+        gameplayScreen.drawItems(g, controller);
+        // ENTITY
+        gameplayScreen.drawEntities(g, controller);
+        // HUD TOP
+        gameplayScreen.drawHUD(g, controller);
+        // FEEDBACK TEXT
+        if (!controller.getNitroFeedback().isEmpty()) {
+            g.setFont(defaultFont.deriveFont(Font.BOLD, 24f));
+            switch (controller.getNitroFeedback()) {
+                case "PERFECT!":
+                    g.setColor(Color.GREEN);
+                    break;
+                case "GOOD!":
+                    g.setColor(Color.YELLOW);
+                    break;
+                case "MISS!":
+                    g.setColor(Color.RED);
+                    break;
+                default:
+                    g.setColor(Color.WHITE);
+                    break;
             }
+            g.drawString(controller.getNitroFeedback(), width / 2 - 60, height - 120);
         }
     }
 
-    private void drawPause(Graphics g) {
-        Font defaultFont = g.getFont();
-        g.setColor(new Color(0, 0, 0, 150));
-        g.fillRect(0, 0, width, height);
-        g.setColor(Color.WHITE);
-        g.setFont(defaultFont.deriveFont(Font.BOLD, 32f));
-        g.drawString("PAUSE", width / 2 - 50, height / 2 - 40);
-        g.setFont(defaultFont.deriveFont(16f));
-        g.drawString("ESC — Resume", width / 2 - 60, height / 2 + 10);
-        g.drawString("R   — Restart", width / 2 - 60, height / 2 + 35);
-        g.drawString("B   — Back To Menu", width / 2 - 60, height / 2 + 60);
-    }
-
     private void drawScore(Graphics g) {
-        Font defaultFont = g.getFont();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width, height);
-        g.setColor(Color.WHITE);
-        g.setFont(defaultFont.deriveFont(Font.BOLD, 32f));
-        g.drawString("GAME OVER", width / 2 - 80, height / 2 - 80);
-        g.setFont(defaultFont.deriveFont(18f));
-        g.drawString("SCORE      : " + controller.getScore(), width / 2 - 80, height / 2 - 40);
-        g.drawString("BEST SCORE : " + controller.getBestScore(), width / 2 - 80, height / 2 - 15);
-        g.setFont(defaultFont.deriveFont(16f));
-        g.drawString("R — Restart", width / 2 - 60, height / 2 + 30);
-        g.drawString("B — Back To Menu", width / 2 - 60, height / 2 + 55);
-        g.setFont(defaultFont);
+        controller.drawGameOver(g);
     }
 }

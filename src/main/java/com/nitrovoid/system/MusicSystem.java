@@ -1,31 +1,35 @@
 package com.nitrovoid.system;
 
-import javax.sound.sampled.*;
 import java.net.URL;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 public class MusicSystem {
 
-    // =======================
-    // BGM
-    // =======================
     private Clip bgmClip;
     private String currentBgmPath;
-    private long bgmPosition = 0; // remember current frame for pause
+    private long bgmPosition = 0;
 
     // =======================
     // GLOBAL STATE
     // =======================
     private boolean volumeOn = true;
     private boolean bgmPaused = false;
+    private boolean bgmPausedByGame = false; // TRUE jika pause oleh pauseScreen/game
+    private boolean bgmNeverPlayed = true;   // TRUE jika BGM belum pernah dimainkan
 
     // =======================
     // PLAY BGM LOOP
     // =======================
     public void playLoop(String path) {
-        stopBGM(); // stop existing BGM
+        stopBGM();
         currentBgmPath = path;
         bgmPosition = 0;
         bgmPaused = false;
+        bgmPausedByGame = false;
+        bgmNeverPlayed = true;
 
         try {
             URL url = getClass().getResource(path);
@@ -37,6 +41,7 @@ public class MusicSystem {
             if (volumeOn) {
                 bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
                 bgmClip.start();
+                bgmNeverPlayed = false;
             }
         } catch (Exception e) {
             System.out.println("BGM error: " + e.getMessage());
@@ -51,9 +56,11 @@ public class MusicSystem {
             bgmClip.stop();
             bgmClip.close();
             bgmClip = null;
-            bgmPosition = 0;
-            bgmPaused = false;
         }
+        bgmPosition = 0;
+        bgmPaused = false;
+        bgmPausedByGame = false;
+        bgmNeverPlayed = true;
     }
 
     // =======================
@@ -64,15 +71,28 @@ public class MusicSystem {
             bgmPosition = bgmClip.getMicrosecondPosition();
             bgmClip.stop();
             bgmPaused = true;
+            bgmPausedByGame = true;
         }
     }
 
-    public void resumeBGM() {
-        if (bgmClip != null && bgmPaused && volumeOn) {
-            bgmClip.setMicrosecondPosition(bgmPosition);
-            bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
-            bgmClip.start();
-            bgmPaused = false;
+    public void resumeAfterPause() {
+        if (bgmClip == null) {
+            return; // tidak ada BGM
+        }
+        if (volumeOn) {
+            if (bgmPaused || bgmNeverPlayed) {
+                // Kalau sedang pause atau belum pernah play
+                bgmClip.setMicrosecondPosition(bgmPosition);
+                bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+                bgmClip.start();
+                bgmPaused = false;
+                bgmPausedByGame = false;
+                bgmNeverPlayed = false;
+            }
+        } else {
+            // volume OFF → tetap pause tapi update flag
+            bgmPaused = true;
+            bgmPausedByGame = true;
         }
     }
 
@@ -101,16 +121,23 @@ public class MusicSystem {
     // VOLUME CONTROL
     // =======================
     public void setVolume(boolean on) {
-        if (volumeOn == on) return;
+        if (volumeOn == on) {
+            return;
+        }
         volumeOn = on;
 
+        if (bgmClip == null) {
+            return;
+        }
+
         if (volumeOn) {
-            if (bgmClip != null && !bgmPaused) {
+            if (!bgmPausedByGame && !bgmClip.isActive() && !bgmNeverPlayed) {
                 bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
                 bgmClip.start();
+                bgmPaused = false;
             }
         } else {
-            if (bgmClip != null) {
+            if (bgmClip.isActive()) {
                 bgmClip.stop();
             }
         }
