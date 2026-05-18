@@ -1,10 +1,16 @@
 package com.nitrovoid.system;
 
+import com.nitrovoid.game.GameController.MapType;
+
 public class ScoreManager {
     private double score;
     private double scoreAccumulator = 0;
-    private int bestScore = 0;
 
+    private MapType currentMap = MapType.KTT;
+    
+    public void setMap(MapType map) {
+        this.currentMap = map; 
+    }
     public ScoreManager() {
         score = 0;
     }
@@ -14,53 +20,43 @@ public class ScoreManager {
         scoreAccumulator = 0;
     }
 
-    public void update(double deltaTime, double currentSpeed) {
-        scoreAccumulator += currentSpeed * deltaTime * 15;
-        score = (int) scoreAccumulator;
+public void update(double deltaTime, double currentSpeed) {
+
+    switch (currentMap) {
+
+        // MAP KETINTANG
+        case KTT:
+            scoreAccumulator +=
+                    currentSpeed *
+                    deltaTime *
+                    10;
+            break;
+
+        // MAP LIWET
+        case LIWET:
+            scoreAccumulator +=
+                    currentSpeed *
+                    deltaTime *
+                    25;
+            break;
+
+        // MAP MAGETAN
+        case MGT:
+            scoreAccumulator +=
+                    currentSpeed *
+                    deltaTime *
+                    50;
+            break;
     }
+
+    score = (int) scoreAccumulator;
+}
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
         score += (int)(timeLeft * 10);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
-        updateBestScore();
     }
-
-    // Dipanggil saat waktu habis (tanpa bonus)
-    public void finalizeScore() {
-        updateBestScore();
-    }
-
-    private void updateBestScore() {
-        if ((int) score > bestScore) {
-            bestScore = (int) score;
-            // TODO: unlock map — aktifkan saat sudah siap
-            // saveBestScore();
-            // MapManager.checkUnlock(bestScore);
-        }
-    }
-
-    // TODO: implementasi save/load best score ke file — aktifkan saat sudah siap
-    // private void saveBestScore() {
-    //     try {
-    //         java.util.prefs.Preferences prefs = 
-    //             java.util.prefs.Preferences.userNodeForPackage(ScoreManager.class);
-    //         prefs.putInt("bestScore", bestScore);
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    // }
-    //
-    // public void loadBestScore() {
-    //     try {
-    //         java.util.prefs.Preferences prefs = 
-    //             java.util.prefs.Preferences.userNodeForPackage(ScoreManager.class);
-    //         bestScore = prefs.getInt("bestScore", 0);
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    // }
 
     public int getScore()     { return (int) score; }
-    public int getBestScore() { return bestScore; }
 }

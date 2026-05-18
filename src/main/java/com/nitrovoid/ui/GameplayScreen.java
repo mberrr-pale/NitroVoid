@@ -36,8 +36,10 @@ public class GameplayScreen {
     private BufferedImage speedometerFrame;
     private BufferedImage nitroBarFrame;
     private BufferedImage pauseBtn;
-    
+        
     public void setMap (GameController.MapType map){loadMap(map);}
+    public void addFeedback(String text, int x, int y, Color color) {
+    feedbacks.add(new FeedbackEntry(text, x, y, color)); }
     public GameplayScreen() { 
         loadCountDown();
         loadVehicles(); 
@@ -183,7 +185,7 @@ public class GameplayScreen {
                 null
         );
     }
-    public void update(double worldSpeed, int screenHeight) {
+    public void update(double worldSpeed, int screenHeight, double deltaTime) {
         mapOffsetY += worldSpeed * 0.2;
         if (mapOffsetY >= screenHeight) {
             mapOffsetY = 0;
@@ -192,6 +194,7 @@ public class GameplayScreen {
         if (roadOffsetY >= screenHeight) {
             roadOffsetY = 0;
         }
+        updateFeedback(deltaTime);
     }
     public void drawLoadMap(Graphics g, int width, int height) {
         // SIDE ENVIRONMENT
@@ -373,4 +376,65 @@ public class GameplayScreen {
         int y = 15;
         g.drawImage(pauseBtn,x,y,width,height,null);
     }
+    
+    private void updateFeedback(double dt) {
+    java.util.Iterator<FeedbackEntry> it = feedbacks.iterator();
+
+    while (it.hasNext()) {
+        FeedbackEntry f = it.next();
+        f.life -= dt;
+        f.alpha = Math.max(0f, f.life / 1.5f);
+        f.y -= 1;
+
+        if (f.life <= 0) it.remove();
+    }
 }
+    
+    
+    private static class FeedbackEntry {
+    String text;
+    int x, y;
+    float alpha = 1f;
+    float life = 1.5f;
+    Color color;
+
+    FeedbackEntry(String text, int x, int y, Color color) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }
+}
+    private java.util.ArrayList<FeedbackEntry> feedbacks = new java.util.ArrayList<>();
+
+public void drawFeedback(Graphics g) {
+
+    Font base = g.getFont();
+    Font fnt = base.deriveFont(Font.BOLD, 22f);
+
+    for (FeedbackEntry e : feedbacks) {
+
+        g.setFont(fnt);
+
+        Color c = new Color(
+            e.color.getRed(),
+            e.color.getGreen(),
+            e.color.getBlue(),
+            (int)(e.alpha * 255)
+        );
+
+        // SHADOW
+        g.setColor(new Color(0,0,0,(int)(e.alpha * 180)));
+        g.drawString(e.text, e.x + 2, e.y + 2);
+
+        // MAIN TEXT
+        g.setColor(c);
+        g.drawString(e.text, e.x, e.y);
+    }
+
+    g.setFont(base);
+    
+}
+}
+
+

@@ -6,6 +6,8 @@ com\nitrovoid\system\NitroSystem$NitroTiming.class
 com\nitrovoid\system\TimerSystem.class
 com\nitrovoid\entity\Player$1.class
 com\nitrovoid\entity\Kendaraan.class
+com\nitrovoid\ui\GameplayScreen$FeedbackEntry.class
+com\nitrovoid\system\SaveManager.class
 com\nitrovoid\ui\GameplayScreen$1.class
 com\nitrovoid\game\GameController$1.class
 com\nitrovoid\game\GamePanel$1.class
@@ -17,6 +19,7 @@ com\nitrovoid\entity\Enemy.class
 com\nitrovoid\system\NitroSystem.class
 com\nitrovoid\entity\Player.class
 com\nitrovoid\system\EnemySpawner.class
+com\nitrovoid\system\ScoreManager$1.class
 com\nitrovoid\system\DifficultyScaler.class
 com\nitrovoid\util\CollisionDetector.class
 com\nitrovoid\system\ScoreManager.class

@@ -28,15 +28,15 @@ public class GamePanel extends JPanel implements Runnable {
     public GamePanel() {
         this.setPreferredSize(new Dimension(width, height));
         this.setDoubleBuffered(true);
-
-        input      = new InputHandler();
+        input = new InputHandler();
         this.addKeyListener(input);
         this.setFocusable(true);
-
-        player     = new Player();
-        controller = new GameController(player, input);
-        controller.setCurrentState(GameState.MENU);
+        player = new Player();
         gameplayScreen = new GameplayScreen();
+        controller = new GameController(
+            player,input,gameplayScreen);
+        controller.initSave();
+        controller.setCurrentState(GameState.MENU);
         gameplayScreen.setMap(controller.getSelectedMap());
     }
 
@@ -66,7 +66,8 @@ public class GamePanel extends JPanel implements Runnable {
         controller.update(deltaTime);
         gameplayScreen.update(
                 controller.getWorldSpeed(),
-                height);
+                height, 
+                deltaTime);
     }
     
 // RENDERING 
@@ -103,7 +104,8 @@ public class GamePanel extends JPanel implements Runnable {
     private void drawMenu(Graphics g) {
         controller.getHomeScreen().draw(g, width, height);
     }
-private void drawChooseMap(Graphics g) {
+
+    private void drawChooseMap(Graphics g) {
 
     Font defaultFont = g.getFont();
 
@@ -183,6 +185,7 @@ private void drawChooseMap(Graphics g) {
     private void drawCountdown(Graphics g) {
         gameplayScreen.drawCountDown(g, controller, width, height);
         gameplayScreen.setMap(controller.getSelectedMap());
+
     }
     private void drawGameplay(Graphics g) {
         if (controller.getCurrentState() == GameState.PLAYING) {
@@ -196,16 +199,7 @@ private void drawChooseMap(Graphics g) {
             // HUD TOP
             gameplayScreen.drawHUD(g, controller);
             // FEEDBACK TEXT
-            if (!controller.getNitroFeedback().isEmpty()) {
-                g.setFont(defaultFont.deriveFont(Font.BOLD, 24f));
-                switch (controller.getNitroFeedback()) {
-                    case "PERFECT!": g.setColor(Color.GREEN);  break;
-                    case "GOOD!":    g.setColor(Color.YELLOW); break;
-                    case "MISS!":    g.setColor(Color.RED);    break;
-                    default:         g.setColor(Color.WHITE);  break;
-                }
-                g.drawString(controller.getNitroFeedback(), width/2 - 60, height - 120);
-            }
+            gameplayScreen.drawFeedback(g);
         }
     }    
     private void drawPause(Graphics g){

@@ -120,6 +120,23 @@ public class Player extends Kendaraan {
             }
         }
     }
+    
+    public void reset() {
+
+        x = GameConfig.PLAYER_START_X;
+        y = GameConfig.PLAYER_START_Y;
+
+        currentSpeed = normalSpeed;
+
+        lateralSpeed = 0;
+
+        boostActive = false;
+        boostTimer  = 0;
+
+        nitroActive = false;
+        nitroTimer  = 0;
+        nitroBoost  = 0;
+    }
 
 //    getter
     public int   getSpeedKmh()           { 

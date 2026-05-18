@@ -58,7 +58,6 @@ public class NitroSystem {
                 cooldownTimer = 0;
                 onCooldown = false;
                 useStreak = 0; // reset streak setelah cooldown selesai
-                System.out.println("Nitro cooldown selesai!");
             }
         }
         // reset streak kalau sudah lebih dari 3 detik sejak pemakaian terakhir
@@ -72,7 +71,6 @@ public class NitroSystem {
     public NitroTiming activate() {
         // tidak bisa pakai kalau cooldown atau stok habis
         if (onCooldown || nitroCount <= 0) {
-            System.out.println("Nitro tidak bisa dipakai!");
             return NitroTiming.MISS;
         }
         nitroCount--;
@@ -82,10 +80,8 @@ public class NitroSystem {
         if (useStreak >= 2) {
             onCooldown = true;
             cooldownTimer = cooldownDuration;
-            System.out.println("Nitro cooldown! 5 detik");
         }
         // tentukan timing
-        // timing ditentukan berdasarkan kapan tombol ditekan
          if (barPosition >= PERFECT_MIN && barPosition <= PERFECT_MAX) {
             lastTiming = NitroTiming.PERFECT;
         } else if (barPosition >= GOOD_MIN && barPosition <= GOOD_MAX) {
@@ -93,8 +89,6 @@ public class NitroSystem {
         } else {
             lastTiming = NitroTiming.MISS;
         }
-
-        System.out.println("Nitro: " + lastTiming + " (bar=" + String.format("%.2f", barPosition) + ")");
         return lastTiming;
     }
 

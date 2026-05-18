@@ -6,15 +6,10 @@ import com.nitrovoid.entity.Enemy;
 import com.nitrovoid.entity.Item;
 import com.nitrovoid.entity.Player;
 import com.nitrovoid.input.InputHandler;
-import com.nitrovoid.system.DifficultyScaler;
-import com.nitrovoid.system.EnemySpawner;
-import com.nitrovoid.system.ItemSpawner;
-import com.nitrovoid.system.NitroSystem;
-import com.nitrovoid.system.ScoreManager;
-import com.nitrovoid.system.SlowMotionSystem;
-import com.nitrovoid.system.TimerSystem;
+import com.nitrovoid.system.*;
 import com.nitrovoid.util.CollisionDetector;
 import com.nitrovoid.game.screen.HomeScreen;
+import com.nitrovoid.ui.GameplayScreen;
 import com.nitrovoid.game.GameConfig;
 import java.awt.Color;
 
@@ -29,6 +24,7 @@ public class GameController {
     private SlowMotionSystem slowMotionSystem = new SlowMotionSystem();
     private EnemySpawner enemySpawner = new EnemySpawner();
     private ItemSpawner itemSpawner = new ItemSpawner();
+    
 //  Config
     private static final int HITBOX_TOLERANCE = 5; 
     private static final double WS_MIN  = 0.5;   
@@ -50,21 +46,24 @@ public class GameController {
     private boolean enterPressed = false;
     private boolean restartPressed = false;
     private boolean backToMenuPressed = false;
-//  UI Feedback
-    private String nitroFeedback = "";
-    private String itemFeedback = "";
-    private Color itemFeedbackColor = Color.WHITE;
-    private double itemFeedbackTimer = 0;
 //  Select map
     public enum MapType {KTT, LIWET, MGT};
     private MapType selectedMap = MapType.KTT;
     private int selectedMapIndex;
-
+    private String currentMapName = "ketintang"; // default
+// Save Manager
+    private SaveManager saveManager = SaveManager.getInstance();
+    private com.nitrovoid.ui.GameplayScreen gameplayScreen;
     
-    public GameController(Player player, InputHandler input) {
+    public void initSave() {
+    saveManager.init(); }
+    
+    public GameController(Player player, InputHandler input, GameplayScreen gameplayScreen) {
         this.player = player;
         this.input = input;
         homeScreen = new HomeScreen();
+        this.gameplayScreen = gameplayScreen;
+        this.gameplayScreen.setMap(selectedMap);
     }
 //  Public Entry
     public void update(double deltaTime) {
@@ -203,7 +202,7 @@ private void updateChooseMap() {
         updateSpawner();
         checkEnemyCollision();
         checkItemCollision();
-        checkGameOver();
+        checkGameOver();        
     }
     private void updatePause() {
         if (input.pause && !pausePressed) {
@@ -242,9 +241,7 @@ private void updateChooseMap() {
 //  GAMEPLAY SUBSYSTEM
     private void updateSystems(double deltaTime ) {        
         timer.update(deltaTime);
-        scoreManager.update(
-                deltaTime, 
-      worldSpeed);
+        scoreManager.update(deltaTime,worldSpeed);
         nitroSystem.update(deltaTime);
         slowMotionSystem.update(deltaTime);
         player.update(input, deltaTime);
@@ -293,51 +290,85 @@ private void updateChooseMap() {
             worldSpeed = maxAllowedSpeed;
         }
     }
-    private void handleGameplayInput(double deltaTime) {   
-        // Input Pause
-        if (input.pause && !pausePressed) {
-            pausePressed = true;
-            currentState = GameState.PAUSE;
-        }
-        if (!input.pause) pausePressed = false;
-        // input nitro & cek supaya ga spam
-        if (nitroFeedbackTimer > 0) {
-            nitroFeedbackTimer -= deltaTime;
-            if (nitroFeedbackTimer <= 0) nitroFeedback = "";
-        }
-        if (input.nitro && !nitroPressed){
-            nitroPressed = true;
-            NitroSystem.NitroTiming timing = nitroSystem.activate();
+private void handleGameplayInput(double deltaTime) {
+
+    // INPUT PAUSE
+    if (input.pause && !pausePressed) {
+
+        pausePressed = true;
+        currentState = GameState.PAUSE;
+    }
+
+    if (!input.pause) {
+        pausePressed = false;
+    }
+
+    // INPUT NITRO
+    if (input.nitro && !nitroPressed) {
+
+        nitroPressed = true;
+
+        if (!nitroSystem.isOnCooldown()
+                && nitroSystem.getNitroCount() > 0) {
+
+            NitroSystem.NitroTiming timing =
+                    nitroSystem.activate();
+
             player.applyNitro(timing);
+
             switch (timing) {
-            case PERFECT:
-                nitroFeedback      = "PERFECT!";
-                nitroFeedbackTimer = FEEDBACK_DURATION;
-                break;
-            case GOOD:
-                nitroFeedback      = "GOOD!";
-                nitroFeedbackTimer = FEEDBACK_DURATION;
-                break;
-            case MISS:
-                nitroFeedback      = "MISS!";
-                nitroFeedbackTimer = FEEDBACK_DURATION;
-                break;
+
+                case PERFECT:
+
+                    gameplayScreen.addFeedback(
+                        "PERFECT!",
+                        GameConfig.SCREEN_WIDTH / 2 - 70,
+                        GameConfig.SCREEN_HEIGHT - 120,
+                        Color.GREEN
+                    );
+                    break;
+
+                case GOOD:
+
+                    gameplayScreen.addFeedback(
+                        "GOOD!",
+                        GameConfig.SCREEN_WIDTH / 2 - 50,
+                        GameConfig.SCREEN_HEIGHT - 120,
+                        Color.YELLOW
+                    );
+                    break;
+
+                case MISS:
+
+                    gameplayScreen.addFeedback(
+                        "MISS!",
+                        GameConfig.SCREEN_WIDTH / 2 - 40,
+                        GameConfig.SCREEN_HEIGHT - 120,
+                        Color.RED
+                    );
+                    break;
             }
         }
-        if (itemFeedbackTimer > 0) {
-            itemFeedbackTimer -= deltaTime;
-            if (itemFeedbackTimer <= 0){
-                itemFeedback = "";
-            }
-        }
-        if (!input.nitro)nitroPressed = false;
-        // cek input slow motion
-        if (input.slowMotion && !slowPressed){
-            slowPressed = true;
-            slowMotionSystem.activate();
-        }
-        if (!input.slowMotion)slowPressed = false;
-    }         
+    }
+
+    // RESET INPUT NITRO
+    if (!input.nitro) {
+        nitroPressed = false;
+    }
+
+    // INPUT SLOW MOTION
+    if (input.slowMotion && !slowPressed) {
+
+        slowPressed = true;
+
+        slowMotionSystem.activate();
+    }
+
+    // RESET INPUT SLOW
+    if (!input.slowMotion) {
+        slowPressed = false;
+    }
+}
     private void updateSpawner() {
         double difficultySpeed = DifficultyScaler.getSpeedMultiplier(scoreManager.getScore());
         double speedMultiplier = slowMotionSystem.getSpeedMultiplier() * difficultySpeed;
@@ -349,6 +380,7 @@ private void updateChooseMap() {
         for (Enemy enemy : enemySpawner.getEnemies()) {
             if (CollisionDetector.isColliding(player, enemy, HITBOX_TOLERANCE)) {
                 scoreManager.addTimeBonus(timer.getTimeLeft());
+                saveManager.updateBestScore(scoreManager.getScore());
                 currentState = GameState.SCORE;
             }
         }    
@@ -368,38 +400,74 @@ private void updateChooseMap() {
     }
     private void checkGameOver(){
         if (timer.isTimeUp()) {
-            scoreManager.finalizeScore();
+            saveManager.updateBestScore(scoreManager.getScore());
             currentState = GameState.SCORE;
         }
     }
-    private void handleItemPickup(Item item){
-       switch (item.getTipe()) {
-           case BOOST:
-               player.applyBoost();
-               itemFeedback = "BOOST!";
-               itemFeedbackColor = Color.ORANGE;
-               itemFeedbackTimer = 1.2;
-               break;
-           case TIME:
-               timer.addTime(5.0);
-               itemFeedback = "+5 SEC";
-               itemFeedbackColor = Color.GREEN;
-               itemFeedbackTimer = 1.2;
-               break;
-           case NITRO:
-               nitroSystem.addNitro();
-               itemFeedback = "+1 NITRO";
-               itemFeedbackColor = Color.CYAN;
-               itemFeedbackTimer = 1.2;
-               break;
-           case SLOWMOTION:
-               slowMotionSystem.addCharge();
-               itemFeedback = "SLOW READY";
-               itemFeedbackColor = Color.CYAN;
-               itemFeedbackTimer = 1.2;
-               break;
-       }
-   }
+private void handleItemPickup(Item item){
+
+    switch (item.getTipe()) {
+
+        case BOOST:
+
+            player.applyBoost();
+
+            gameplayScreen.addFeedback(
+                "BOOST!",
+                item.getX(),
+                item.getY(),
+                Color.ORANGE
+            );
+
+            gameplayScreen.addFeedback(
+                "+10 SEC",
+                item.getX(),
+                item.getY() - 20,
+                Color.YELLOW
+            );
+
+            break;
+
+        case TIME:
+
+            timer.addTime(10);
+
+            gameplayScreen.addFeedback(
+                "+10 SEC",
+                item.getX(),
+                item.getY(),
+                Color.GREEN
+            );
+
+            break;
+
+        case NITRO:
+
+            nitroSystem.addNitro();
+
+            gameplayScreen.addFeedback(
+                "+1 NITRO",
+                item.getX(),
+                item.getY(),
+                Color.CYAN
+            );
+
+            break;
+
+        case SLOWMOTION:
+
+            slowMotionSystem.addCharge();
+
+            gameplayScreen.addFeedback(
+                "SLOW READY",
+                item.getX(),
+                item.getY(),
+                Color.CYAN
+            );
+
+            break;
+    }
+}
 //  GAME FLOW
     public void startStory() {
         currentState = GameState.STORY;
@@ -412,8 +480,12 @@ private void updateChooseMap() {
     public void startGame() {
         currentState = GameState.PLAYING;
         worldSpeed = WS_MIN;
+        timer.reset();
         timer.start();
         scoreManager.reset();
+        scoreManager.setMap(selectedMap);
+        player.reset();
+        currentMapName = selectedMap.name().toLowerCase(); 
         nitroSystem.reset();
         slowMotionSystem.reset();
         enemySpawner = new EnemySpawner();
@@ -421,6 +493,7 @@ private void updateChooseMap() {
     }
     public void restartGame() {
         timer.reset();
+        player.reset();
         scoreManager.reset();
         nitroSystem.reset();
         slowMotionSystem.reset();
@@ -432,6 +505,7 @@ private void updateChooseMap() {
     public void goToMenu() {
         currentState = GameState.MENU;
         timer.reset();
+        player.reset();
         scoreManager.reset();
         enemySpawner = new EnemySpawner();
         itemSpawner  = new ItemSpawner();
@@ -470,12 +544,9 @@ private void updateChooseMap() {
         return (int)(60 + ratio * 180);
     }
     public int getCountdownValue()  { return countdownValue; }
-    public int getBestScore() { return scoreManager.getBestScore(); }
-    public String getNitroFeedback()   { return nitroFeedback; }
+    public int getBestScore() { return saveManager.getBestScore(); }
     public double getBarPosition()     { return nitroSystem.getBarPosition(); }
     public double getWorldSpeed() { return worldSpeed; }
-    public String getItemFeedback() { return itemFeedback; }
-    public Color getItemFeedbackColor() { return itemFeedbackColor; }
     public MapType getSelectedMap() {return selectedMap;}
     public int getSelectedMapIndex() {return selectedMapIndex;}    
 }
