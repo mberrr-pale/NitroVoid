@@ -10,10 +10,6 @@ import com.nitrovoid.system.*;
 import com.nitrovoid.ui.screen.*;
 import com.nitrovoid.util.CollisionDetector;
 
-import static com.nitrovoid.entity.Item.TipeItem.*;
-import static com.nitrovoid.game.GameState.*;
-import static com.nitrovoid.system.NitroSystem.NitroTiming.*;
-
 public class GameController {
 
     // CORE
