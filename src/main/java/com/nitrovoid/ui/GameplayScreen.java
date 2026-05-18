@@ -185,7 +185,10 @@ public class GameplayScreen {
                 null
         );
     }
-    public void update(double worldSpeed, int screenHeight, double deltaTime) {
+    public void update(double worldSpeed, int screenHeight, boolean paused) {
+        if (paused) {
+            return;
+        }
         mapOffsetY += worldSpeed * 0.2;
         if (mapOffsetY >= screenHeight) {
             mapOffsetY = 0;
@@ -194,51 +197,62 @@ public class GameplayScreen {
         if (roadOffsetY >= screenHeight) {
             roadOffsetY = 0;
         }
-        updateFeedback(deltaTime);
     }
     public void drawLoadMap(Graphics g, int width, int height) {
         // SIDE ENVIRONMENT
-        g.drawImage(mapBackground,0,(int) mapOffsetY,
-                    width,height,null);
-        g.drawImage(mapBackground, 0,(int) mapOffsetY - height,
-                    width, height, null);
+        g.drawImage(
+            mapBackground,0,(int) mapOffsetY,
+            width,height,null);
+        g.drawImage(
+            mapBackground, 0,(int) mapOffsetY - height,
+            width, height, null);
         // ROAD
         int roadWidth = 300;
         int roadX = (width - roadWidth) / 2;
-        g.drawImage(road, roadX, (int) roadOffsetY,
-               roadWidth, height, null);
-        g.drawImage(road, roadX, (int) roadOffsetY - height,
-                roadWidth, height, null);
+        g.drawImage(
+            road, roadX, (int) roadOffsetY,
+            roadWidth, height, null);
+        g.drawImage(
+            road, roadX, (int) roadOffsetY - height,
+            roadWidth, height, null);
     }
     public void drawEntities(Graphics g, GameController controller) {
         // PLAYER
         Player player = controller.getPlayer();
-        g.drawImage(playerCar,player.getX(),player.getY(),
-               player.getWidth(),player.getHeight(),null);
+        g.drawImage(
+            playerCar,player.getX(),player.getY(),
+            player.getWidth(),player.getHeight(),null);
         // ENEMIES
         for (Enemy enemy : controller.getEnemies()) {
             int index = enemy.getVehicleIndex();
-        g.drawImage(enemyCars[index],enemy.getX(),enemy.getY(),
-               enemy.getWidth(),enemy.getHeight(),null);         
+        g.drawImage(
+            enemyCars[index],enemy.getX(),enemy.getY(),
+            enemy.getWidth(),enemy.getHeight(),null);         
         }
     }
     public void drawItems(Graphics g, GameController controller) {
         for (Item item : controller.getItems()) {
         BufferedImage icon = null;
         switch (item.getTipe()) {
+
             case BOOST:
                 icon = boostItem;
                 break;
+
             case TIME:
                 icon = timeItem;
                 break;
+
             case NITRO:
                 icon = nitroItem;
                 break;
+
             case SLOWMOTION:
                 icon = slowItem;
                 break; }
-        g.drawImage(icon, item.getX(), item.getY(),
+
+        g.drawImage(
+            icon, item.getX(), item.getY(),
             item.getWidth(), item.getHeight(), null);
         }
     }
@@ -263,7 +277,7 @@ public class GameplayScreen {
         g.setColor(Color.WHITE);
         g.setFont(g.getFont().deriveFont(Font.BOLD,20f));
         String timeText = 
-                "Time : " + (int)controller.getTimeLeft();
+            "Time : " + (int)controller.getTimeLeft();
         g.drawString(timeText, x + 48 , y + 32);
     }
     private void drawScoreHUD(Graphics g, GameController controller){
@@ -280,7 +294,7 @@ public class GameplayScreen {
         FontMetrics fm =
             g.getFontMetrics();
         int textX = x + (
-                width - fm.stringWidth(scoreText)) / 2 + 10;
+            width - fm.stringWidth(scoreText)) / 2 + 10;
         int textY = y + 30;
         g.drawString(scoreText,textX,textY);        
 
@@ -291,7 +305,9 @@ public class GameplayScreen {
         int x = 570;
         int y = 15;
         // FRAME
-        g.drawImage(bestScoreFrame,x,y,width,height,null);
+        g.drawImage(
+            bestScoreFrame,x,y,
+            width,height,null);
         // BEST SCORE
         g.setColor(Color.WHITE);
         g.setFont(g.getFont().deriveFont(
@@ -301,7 +317,9 @@ public class GameplayScreen {
         g.setFont(g.getFont().deriveFont(
             Font.BOLD, 16f));
         String bestScoreText = String.valueOf(controller.getBestScore());
-        g.drawString(bestScoreText, x + 65 , y + 46);
+        g.drawString(
+            bestScoreText,
+             x + 65 , y + 46);
     }
     private void drawNitroHUD(Graphics g,GameController controller) {
         int x = 15;
@@ -317,7 +335,9 @@ public class GameplayScreen {
                 Font.BOLD, 20f));
         String nitroText = 
                 "Nitro : " + (int)controller.getNitroCount();
-        g.drawString(nitroText, x + 50 , y + 30);
+        g.drawString(
+            nitroText,
+             x + 50 , y + 30);
     }
     private void drawSlowMotionHUD(Graphics g,GameController controller) {
         int x = 15;
@@ -325,7 +345,8 @@ public class GameplayScreen {
         int width = 165;
         int height = 45;
         // FRAME
-        g.drawImage(slowMotionFrame,x,y,
+        g.drawImage(
+            slowMotionFrame,x,y,
             width,height,null);
         // CHARGE COUNT
         g.setColor(Color.WHITE);
@@ -333,7 +354,9 @@ public class GameplayScreen {
             Font.BOLD, 20f));
         String slowmoText = 
                 "Slow : " + (int)controller.getSlowCharge();
-        g.drawString(slowmoText, x + 50 , y + 30);
+        g.drawString(
+            slowmoText,
+            x + 50 , y + 30);
     }
     private void drawSpeedometerHUD(Graphics g,GameController controller) {
         int width = 215;
@@ -353,7 +376,8 @@ public class GameplayScreen {
         int textX = x + (
                 width - fm.stringWidth(speedText)) / 2;
         int textY = y + 100;
-        g.drawString(speedText,textX,textY);
+        g.drawString(
+            speedText,textX,textY);
     }
     private void drawNitroTimingBar(Graphics g,GameController controller) {
         int barX = 200;
@@ -389,8 +413,6 @@ public class GameplayScreen {
         if (f.life <= 0) it.remove();
     }
 }
-    
-    
     private static class FeedbackEntry {
     String text;
     int x, y;
@@ -407,34 +429,30 @@ public class GameplayScreen {
 }
     private java.util.ArrayList<FeedbackEntry> feedbacks = new java.util.ArrayList<>();
 
-public void drawFeedback(Graphics g) {
+    public void drawFeedback(Graphics g) {
+        Font base = g.getFont();
+        Font fnt = base.deriveFont(Font.BOLD, 22f);
 
-    Font base = g.getFont();
-    Font fnt = base.deriveFont(Font.BOLD, 22f);
+        for (FeedbackEntry e : feedbacks) {
+            g.setFont(fnt);
 
-    for (FeedbackEntry e : feedbacks) {
+            Color c = new Color(
+                e.color.getRed(),
+                e.color.getGreen(),
+                e.color.getBlue(),
+                (int)(e.alpha * 255)
+            );
 
-        g.setFont(fnt);
+            // SHADOW
+            g.setColor(new Color(0,0,0,(int)(e.alpha * 180)));
+            g.drawString(e.text, e.x + 2, e.y + 2);
 
-        Color c = new Color(
-            e.color.getRed(),
-            e.color.getGreen(),
-            e.color.getBlue(),
-            (int)(e.alpha * 255)
-        );
-
-        // SHADOW
-        g.setColor(new Color(0,0,0,(int)(e.alpha * 180)));
-        g.drawString(e.text, e.x + 2, e.y + 2);
-
-        // MAIN TEXT
-        g.setColor(c);
-        g.drawString(e.text, e.x, e.y);
+            // MAIN TEXT
+            g.setColor(c);
+            g.drawString(e.text, e.x, e.y);
+        }
+        g.setFont(base);
     }
-
-    g.setFont(base);
-    
-}
 }
 
 

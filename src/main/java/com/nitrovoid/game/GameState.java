@@ -7,5 +7,6 @@ public enum GameState {
     COUNTDOWN,
     PLAYING,
     PAUSE,
+    GAMEOVER,
     SCORE
 }

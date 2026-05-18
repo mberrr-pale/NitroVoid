@@ -3,6 +3,8 @@ package com.nitrovoid.system;
 import com.nitrovoid.game.GameController.MapType;
 
 public class ScoreManager {
+
+    private static ScoreManager instance;
     private double score;
     private double scoreAccumulator = 0;
 
@@ -15,6 +17,16 @@ public class ScoreManager {
         score = 0;
     }
 
+    // Singleton
+    public static ScoreManager getInstance() {
+
+        if (instance == null) {
+            instance = new ScoreManager();
+        }
+        return instance;
+    }
+
+    // Reset score saat game restart
     public void reset() {
         score = 0;
         scoreAccumulator = 0;
@@ -23,7 +35,6 @@ public class ScoreManager {
 public void update(double deltaTime, double currentSpeed) {
 
     switch (currentMap) {
-
         // MAP KETINTANG
         case KTT:
             scoreAccumulator +=
@@ -54,7 +65,7 @@ public void update(double deltaTime, double currentSpeed) {
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
-        score += (int)(timeLeft * 10);
+        score += (int) (timeLeft * 10);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
     }
 
