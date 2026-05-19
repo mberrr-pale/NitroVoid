@@ -225,7 +225,7 @@ public class GameplayScreen {
             playerCar,player.getX(),player.getY(),
             player.getWidth(),player.getHeight(),null);
         // ENEMIES
-        for (Enemy enemy : controller.getEnemies()) {
+        for (Enemy enemy : new ArrayList<>(controller.getEnemies())) {
             int index = enemy.getVehicleIndex();
         g.drawImage(
             enemyCars[index],enemy.getX(),enemy.getY(),
@@ -246,7 +246,7 @@ public class GameplayScreen {
                 break;
 
             case NITRO:
-                icon = nitroItem;
+                icon = nitroItem;   
                 break;
 
             case SLOWMOTION:

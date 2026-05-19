@@ -40,7 +40,7 @@ public void update(double deltaTime, double currentSpeed) {
             scoreAccumulator +=
                     currentSpeed *
                     deltaTime *
-                    10;
+                    15;
             break;
 
         // MAP LIWET
@@ -48,7 +48,7 @@ public void update(double deltaTime, double currentSpeed) {
             scoreAccumulator +=
                     currentSpeed *
                     deltaTime *
-                    25;
+                    20;
             break;
 
         // MAP MAGETAN
@@ -56,7 +56,7 @@ public void update(double deltaTime, double currentSpeed) {
             scoreAccumulator +=
                     currentSpeed *
                     deltaTime *
-                    50;
+                    30;
             break;
     }
 
@@ -65,7 +65,7 @@ public void update(double deltaTime, double currentSpeed) {
 
     // Bonus sisa waktu — hanya dipanggil saat tabrakan enemy
     public void addTimeBonus(double timeLeft) {
-        score += (int) (timeLeft * 10);
+        score += (int) (timeLeft * 20);
         scoreAccumulator = score; // sync accumulator supaya tidak overlap
     }
 
