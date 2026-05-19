@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.util.ArrayList;
 
 import com.nitrovoid.game.GameController;
 import com.nitrovoid.entity.Player;
@@ -185,7 +186,7 @@ public class GameplayScreen {
                 null
         );
     }
-    public void update(double worldSpeed, int screenHeight, boolean paused) {
+    public void update(double worldSpeed, int screenHeight, boolean paused, double deltaTime) {
         if (paused) {
             return;
         }
@@ -197,6 +198,7 @@ public class GameplayScreen {
         if (roadOffsetY >= screenHeight) {
             roadOffsetY = 0;
         }
+        updateFeedback(deltaTime);
     }
     public void drawLoadMap(Graphics g, int width, int height) {
         // SIDE ENVIRONMENT
@@ -401,7 +403,7 @@ public class GameplayScreen {
         g.drawImage(pauseBtn,x,y,width,height,null);
     }
     
-    private void updateFeedback(double dt) {
+    public void updateFeedback(double dt) {
     java.util.Iterator<FeedbackEntry> it = feedbacks.iterator();
 
     while (it.hasNext()) {
@@ -433,7 +435,7 @@ public class GameplayScreen {
         Font base = g.getFont();
         Font fnt = base.deriveFont(Font.BOLD, 22f);
 
-        for (FeedbackEntry e : feedbacks) {
+    for (FeedbackEntry e : new ArrayList<>(feedbacks)) {
             g.setFont(fnt);
 
             Color c = new Color(

@@ -37,12 +37,13 @@ public class GamePanel extends JPanel implements Runnable {
         this.addMouseMotionListener(input);  
 
         player = new Player();
+        
+        gameplayScreen = new GameplayScreen();
 
         controller = new GameController(frame, player, input, gameplayScreen);
         controller.initSave();
         controller.setCurrentState(GameState.MENU);
 
-        gameplayScreen = new GameplayScreen();
         gameplayScreen.setMap(controller.getSelectedMap());
     }
 
@@ -74,7 +75,7 @@ public class GamePanel extends JPanel implements Runnable {
         boolean paused = (
             controller.getCurrentState() == GameState.PAUSE);
         gameplayScreen.update(
-            controller.getWorldSpeed(), height, paused);
+            controller.getWorldSpeed(), height, paused, deltaTime);
     }
 
     @Override

@@ -194,6 +194,8 @@ public class GameController {
     // MAP SELECT
     private void openMapSelection() {
 
+        selectMapScreen.refreshUnlock();
+
         currentState = GameState.CHOOSE_MAP;
 
         SwingUtilities.invokeLater(() -> {
@@ -362,8 +364,8 @@ public class GameController {
 
         worldSpeed = WS_MIN;
 
-        timer.start();
         timer.reset();
+        timer.start();
 
         scoreManager.reset();
         scoreManager.setMap(selectedMap);
@@ -382,6 +384,7 @@ public class GameController {
         updateSystems(deltaTime);
         updateWorldSpeed(deltaTime);
         handleGameplayInput(deltaTime);
+        gameplayScreen.updateFeedback(deltaTime);
         updateSpawner();
         checkEnemyCollision();
         checkItemCollision();
@@ -606,56 +609,55 @@ public class GameController {
         }
         if (!input.pause) {
             pausePressed = false;
-        }    
-        if (input.nitro && !nitroPressed) {
-            nitroPressed = true;
-        if (!nitroSystem.isOnCooldown()
-            && nitroSystem.getNitroCount() > 0) {            
-                NitroSystem.NitroTiming timing = nitroSystem.activate();
-    
-        player.applyNitro(timing);
-
-            switch (timing) {
-                case PERFECT:
-                    gameplayScreen.addFeedback(
-                        "PERFECT!",
-                        GameConfig.SCREEN_WIDTH / 2 - 70,
-                        GameConfig.SCREEN_HEIGHT - 120,
-                        Color.GREEN
-                    );
-                    break;
-
-                case GOOD:
-                    gameplayScreen.addFeedback(
-                        "GOOD!",
-                        GameConfig.SCREEN_WIDTH / 2 - 50,
-                        GameConfig.SCREEN_HEIGHT - 120,
-                        Color.YELLOW
-                    );
-                    break;
-
-                case MISS:
-                    gameplayScreen.addFeedback(
-                        "MISS!",
-                        GameConfig.SCREEN_WIDTH / 2 - 40,
-                        GameConfig.SCREEN_HEIGHT - 120,
-                        Color.RED
-                    );
-                    break;
-            }    
         }
-        
-            if (itemFeedbackTimer > 0) {
-                itemFeedbackTimer -= deltaTime;
-                if (itemFeedbackTimer <= 0) {
-                    itemFeedback = "";
+        // nitro pressed
+        if (input.nitro && !nitroPressed) {
+
+            nitroPressed = true;
+
+            if (!nitroSystem.isOnCooldown()
+                    && nitroSystem.getNitroCount() > 0) {
+
+                NitroSystem.NitroTiming timing = nitroSystem.activate();
+
+                player.applyNitro(timing);
+
+                switch (timing) {
+
+                    case PERFECT:
+                        gameplayScreen.addFeedback(
+                            "PERFECT!",
+                            GameConfig.SCREEN_WIDTH / 2 - 70,
+                            GameConfig.SCREEN_HEIGHT - 120,
+                            Color.GREEN
+                        );
+                        break;
+
+                    case GOOD:
+                        gameplayScreen.addFeedback(
+                            "GOOD!",
+                            GameConfig.SCREEN_WIDTH / 2 - 50,
+                            GameConfig.SCREEN_HEIGHT - 120,
+                            Color.YELLOW
+                        );
+                        break;
+
+                    case MISS:
+                        gameplayScreen.addFeedback(
+                            "MISS!",
+                            GameConfig.SCREEN_WIDTH / 2 - 40,
+                            GameConfig.SCREEN_HEIGHT - 120,
+                            Color.RED
+                        );
+                        break;
                 }
             }
-            // RESET INPUT NITRO
-            if (!input.nitro) {
-                nitroPressed = false;
-            }
-        }    
+        }
+
+        // RESET INPUT NITRO
+        if (!input.nitro) {
+            nitroPressed = false;
+        }
         // INPUT SLOW MOTION
         if (input.slowMotion && !slowPressed) {
             slowPressed = true;

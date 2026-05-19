@@ -192,6 +192,13 @@ public class SelectMapScreen extends JPanel {
         }
         return maps[index].locked;
     }
+    
+    public void refreshUnlock() {
+        int score = SaveManager.getInstance().getBestScore();
+
+        maps[1].locked = score < 10000;
+        maps[2].locked = score < 15000;
+    }
 
     // ================= DRAW =================
     @Override
