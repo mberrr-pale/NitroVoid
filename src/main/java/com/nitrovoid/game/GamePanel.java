@@ -123,7 +123,6 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void drawGameplay(Graphics g) {
-        if (controller.getCurrentState() == GameState.PLAYING) {
             Font defaultFont = g.getFont();
             // BACKGROUND
             gameplayScreen.drawLoadMap(g, width, height);
@@ -135,7 +134,6 @@ public class GamePanel extends JPanel implements Runnable {
             gameplayScreen.drawHUD(g, controller);
             // FEEDBACK TEXT
             gameplayScreen.drawFeedback(g);
-        }
     }     
     private void drawScore(Graphics g){
         controller.drawGameOver(g);
