@@ -1,2 +1,27 @@
+# Maven build output
 target/
+
+# Compiled class files
 *.class
+
+# Save file game (data lokal, tidak perlu di-repo)
+nitrovoid_save.properties
+
+# NetBeans (kamu pakai NetBeans karena ada nb-configuration.xml)
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# IDE lain (jaga-jaga)
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
